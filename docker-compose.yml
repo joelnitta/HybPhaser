@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  hybphaser:
+    build: .
+    image: hybphaser:latest
+    container_name: hybphaser
+    volumes:
+      # Mount your data directory
+      - ./data:/data/input
+      # Mount output directory
+      - ./output:/data/output
+    working_dir: /data
+    # Keep container running for interactive use
+    stdin_open: true
+    tty: true
+    # Optionally set memory limits (uncomment and adjust as needed)
+    # mem_limit: 8g
+    # cpus: 4
