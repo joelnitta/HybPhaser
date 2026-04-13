@@ -1,0 +1,30 @@
+Package: HybPhaser
+Title: Phasing of Sequence Reads for Polyploid Hybrids from Target Capture 
+    Data
+Version: 2.1.0
+Authors@R: 
+    person("Joel", "Nitta", , "joelnitta@gmail.com", 
+           role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0003-4719-7472"))
+Description: HybPhaser detects hybrids by measuring heterozygosity in target 
+    capture datasets and phases hybrid accessions by separating reads according 
+    to similarity with selected taxa that represent parental clades. It is 
+    designed as an extension to the HybPiper assembly pipeline.
+License: GPL (>= 3)
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.3
+Imports:
+    ape (>= 5.4),
+    seqinr (>= 4.2),
+    stringr (>= 1.4)
+Suggests: 
+    testthat (>= 3.0.0),
+    knitr,
+    rmarkdown
+Config/testthat/edition: 3
+VignetteBuilder: knitr
+URL: https://github.com/LarsNauheimer/HybPhaser
+BugReports: https://github.com/LarsNauheimer/HybPhaser/issues
+Depends: 
+    R (>= 4.0)
