@@ -143,6 +143,10 @@ count_snps <- function(
   rownames(tab_snps) <- targets_name
   rownames(tab_length) <- targets_name
 
+  # Remove the 'loci' column (first column) - it's redundant with rownames
+  tab_snps <- tab_snps[, -1, drop = FALSE]
+  tab_length <- tab_length[, -1, drop = FALSE]
+
   # Save results
   saveRDS(tab_snps, file = file.path(output_robjects, "Table_SNPs.Rds"))
   saveRDS(

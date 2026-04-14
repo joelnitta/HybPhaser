@@ -21,8 +21,9 @@ library(HybPhaser)
 has_docker <- check_docker(quiet = TRUE)
 has_image <- FALSE
 if (has_docker) {
-  has_image <- check_docker_image("joelnitta/hybphaser:latest", 
-                                   pull = FALSE)
+  has_image <- check_docker_image("joelnitta/hybphaser:latest",
+    pull = FALSE
+  )
 }
 ```
 
@@ -56,6 +57,7 @@ The example below is the full end-to-end workflow:
 1. Run HybPiper (conda)
 2. Generate consensus sequences (Docker)
 3. Count SNPs (R)
+4. Assess dataset quality (R)
 
 If HybPiper is installed in a conda environment (default name:
 `hybpiper_env`), you can download and run the official test dataset and
@@ -87,15 +89,34 @@ run_generate_consensus_sequences(
 
 # 3. Count SNPs
 snp_results <- count_snps(
-  path_to_output_folder = file.path(hp_data$hybpiper_dir, "hybphaser_output"),
+  path_to_output_folder = file.path(
+    hp_data$hybpiper_dir,
+    "hybphaser_output"
+  ),
   fasta_file_with_targets = hp_data$targets_file,
   targets_file_format = "DNA",
   path_to_namelist = hp_data$namelist
 )
 
-# 4. Inspect results
+# 4. Assess dataset quality
+# Generate tables and plots to assess sequence recovery and identify
+# putative paralogs
+assessment <- assess_dataset(
+  snp_table = snp_results$tab_snps,
+  length_table = snp_results$tab_length,
+  targets_file = hp_data$targets_file,
+  targets_type = "DNA",
+  output_dir = file.path(hp_data$hybpiper_dir, "hybphaser_output"),
+  min_loci_per_sample_prop = 0.5,
+  min_samples_per_locus_prop = 0.5,
+  paralog_threshold = "outliers",
+  remove_sample_outliers = TRUE
+)
+
+# 5. Inspect results
 head(snp_results$tab_snps)
 head(snp_results$tab_length)
+head(assessment$summary_table)
 ```
 
 ## Next Steps
@@ -114,14 +135,8 @@ will be documented in future vignette updates.
 
 ## Getting Help
 
-- Function documentation: `?count_snps`
+- Function documentation: `?count_snps`, `?assess_dataset`
 - Report issues: <https://github.com/LarsNauheimer/HybPhaser/issues>
 - Original HybPhaser paper: [bioRxiv preprint](
   https://www.biorxiv.org/content/10.1101/2020.10.27.354589v2)
 
-## Clean Up
-
-```{r}
-# Remove temporary files
-unlink(temp_dir, recursive = TRUE)
-```
