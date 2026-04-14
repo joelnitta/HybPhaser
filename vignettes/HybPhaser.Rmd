@@ -61,6 +61,7 @@ The example below is the full end-to-end workflow:
 3. Count SNPs (R)
 4. Assess dataset quality (R)
 5. Generate sequence lists (R)
+6. Extract mapped reads for clade association (R)
 
 If HybPiper is installed in a conda environment (default name:
 `hybpiper_env`), you can download and run the official test dataset and
@@ -129,19 +130,32 @@ seq_lists <- generate_sequence_lists(
   path_to_namelist = hp_data$namelist
 )
 
-# 6. Inspect results
+# 6. Extract mapped reads for clade association
+mapped_reads <- extract_mapped_reads(
+  base_dir = file.path(hp_data$hybpiper_dir, "hybphaser_output"),
+  output_dir = file.path(
+    hp_data$hybpiper_dir,
+    "hybphaser_output",
+    "mapped_reads"
+  ),
+  namelist = hp_data$namelist,
+  remove_duplicate_sequences = FALSE
+)
+
+# 7. Inspect results
 head(snp_results$tab_snps)
 head(snp_results$tab_length)
 head(assessment$summary_table)
 cat("\nSequence lists created:\n")
 cat("  Loci:", seq_lists$n_loci_files, "\n")
 cat("  Samples:", seq_lists$n_sample_files, "\n")
+cat("\nMapped reads files created:", mapped_reads$n_samples, "\n")
 ```
 
 ## Next Steps
 
-After generating sequence lists, the typical HybPhaser workflow continues 
-with:
+After generating sequence lists and mapped read files, the typical HybPhaser
+workflow continues with:
 
 1. **Clade Association** - Map reads to reference clades using BBSplit
 2. **Phasing** - Separate hybrid reads into parental haplotypes
@@ -153,7 +167,7 @@ will be documented in future vignette updates.
 ## Getting Help
 
 - Function documentation: `?count_snps`, `?assess_dataset`,
-  `?generate_sequence_lists`
+  `?generate_sequence_lists`, `?extract_mapped_reads`
 - Report issues: <https://github.com/LarsNauheimer/HybPhaser/issues>
 - Original HybPhaser paper: [bioRxiv preprint](
   https://www.biorxiv.org/content/10.1101/2020.10.27.354589v2)
