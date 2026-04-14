@@ -51,7 +51,6 @@ count_snps <- function(
   )
 
   # Load required packages
-  requireNamespace("ape", quietly = TRUE)
   requireNamespace("seqinr", quietly = TRUE)
   requireNamespace("stringr", quietly = TRUE)
 

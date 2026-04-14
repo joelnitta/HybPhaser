@@ -1,34 +1,136 @@
 # HybPhaser
 
-**Version 2.0** -- this version is a major update from the version 1.2. It contains changes in regards to file generation and output. The workflos should be faster and easier to use. In addition, a number of bugs have been removed. 
+**Version 2.1** -- R package version. This is a conversion of HybPhaser 
+to a proper R package with improved Docker integration and comprehensive 
+testing.
 
-HybPhaser was developed to deal with hybrids (and polyploids) in target capture datasets. 
+HybPhaser was developed to deal with hybrids (and polyploids) in target 
+capture datasets. 
 
-It detects hybrids by measuring heterozygosity in the dataset and phase hybrid accessions by separating reads according to similarity with selected taxa that represent parental clades. 
+It detects hybrids by measuring heterozygosity in the dataset and phase 
+hybrid accessions by separating reads according to similarity with 
+selected taxa that represent parental clades. 
 
-HybPhaser is built as an extension to the assembly pipeline [HybPiper](https://github.com/mossmatters/HybPiper). Check also the new and improved [HybPiper 2](https://hackmd.io/@mossmatters/rkuBTSH-q)!
+HybPhaser is built as an extension to the assembly pipeline 
+[HybPiper](https://github.com/mossmatters/HybPiper). Check also the new 
+and improved [HybPiper 2](https://hackmd.io/@mossmatters/rkuBTSH-q)!
 
-A preprint of the submitted manuscript describing the application of HybPhaser is available at [bioRxiv]( https://www.biorxiv.org/content/10.1101/2020.10.27.354589v2)
+A preprint of the submitted manuscript describing the application of 
+HybPhaser is available at 
+[bioRxiv](https://www.biorxiv.org/content/10.1101/2020.10.27.354589v2)
 
 
 ## Installation
 
-HybPhaser Installation
+You can install the development version of HybPhaser from GitHub:
 
-HybPhaser scripts can be downloaded from [GitHub](https://github.com/larsnauheimer/HybPhaser)
+```r
+# install.packages("devtools")
+devtools::install_github("LarsNauheimer/HybPhaser")
+```
 
-Software dependencies
+### Dependencies
 
-    R (v4.0)
-    R-packages:
-        ape (v5.4)
-        seqinR (v4.2)
-        stringR (v1.4)
-    BWA (v0.0.17)
-    SAMtools (v1.9)
-    Bcftools (v1.9)
-    BBSplit (BBMap v38.87)
-    HybPiper (v1.3.1-2.08)
+HybPhaser requires:
+
+- R (>= 4.0)
+- R packages: `seqinr` (>= 4.2), `stringr` (>= 1.4)
+- Docker (for running consensus generation and read extraction workflows)
+
+The HybPhaser Docker image includes all external dependencies:
+- BWA (v0.7.17)
+- SAMtools (v1.9)
+- Bcftools (v1.9)
+- BBSplit (BBMap v38.87)
+
+## Quick Start
+
+You can run HybPiper from conda and then continue with HybPhaser.
+
+### Run Official HybPiper Test Dataset via Conda
+
+```r
+library(HybPhaser)
+
+# Check tool availability
+check_conda()
+check_hybpiper_conda("hybpiper_env")
+check_docker()
+
+# Run HybPiper on official test reads downloaded from upstream
+hp_data <- run_hybpiper_test_dataset(
+  output_dir = tempfile("hybpiper_test_"),
+  samples = c("EG30"),
+  conda_env = "hybpiper_env",
+  cpu = 1
+)
+
+# Continue with HybPhaser workflow
+output_dir <- file.path(hp_data$hybpiper_dir, "hybphaser_output")
+run_generate_consensus_sequences(
+  hybpiper_dir = hp_data$hybpiper_dir,
+  output_dir = output_dir,
+  namelist = hp_data$namelist,
+  threads = 1
+)
+
+snp_results <- count_snps(
+  path_to_output_folder = output_dir,
+  fasta_file_with_targets = hp_data$targets_file,
+  targets_file_format = "DNA",
+  path_to_namelist = hp_data$namelist
+)
+```
+
+### With Your Data
+
+```r
+library(HybPhaser)
+
+# After running HybPiper on your samples...
+
+# 1. Generate consensus sequences using Docker
+run_generate_consensus_sequences(
+  hybpiper_dir = "path/to/hybpiper_output",
+  output_dir = "hybphaser_output",
+  namelist = "namelist.txt",
+  threads = 4
+)
+
+# 2. Count SNPs in consensus sequences
+snp_results <- count_snps(
+  path_to_output_folder = "hybphaser_output",
+  fasta_file_with_targets = "targets.fasta",
+  targets_file_format = "DNA",
+  path_to_namelist = "namelist.txt"
+)
+
+# 3. View results
+head(snp_results$tab_snps)   # SNP proportions
+head(snp_results$tab_length) # Sequence lengths
+```
+
+### Understanding the Data Structure
+
+Use test data to see what directory structure HybPhaser expects:
+
+```r
+# Create test data to see expected structure
+test_data <- create_real_test_dataset(
+  base_dir = tempdir(),
+  samples = c("sample1", "sample2"),
+  n_genes = 5
+)
+
+# Shows the expected HybPiper output structure
+list.files(test_data$hybpiper_dir, recursive = TRUE)
+```
+
+See the package vignette for more details:
+
+```r
+vignette("HybPhaser")
+```
 
 ## Data Preparation
 

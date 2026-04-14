@@ -11,7 +11,6 @@
 ^HybPhaser_Main_script\.R$
 ^1_generate_consensus_sequences.*\.sh$
 ^2_extract_mapped_reads\.sh$
-^.*\.sh$
 ^1a_count_snps\.R$
 ^1b_assess_dataset\.R$
 ^1c_generate_sequence_lists\.R$
@@ -21,3 +20,6 @@
 ^3b_collate_phasing_stats\.R$
 ^4_merge_sequence_lists\.R$
 ^img$
+^doc$
+^Meta$
+^inst/extdata/hybpiper_test_data$

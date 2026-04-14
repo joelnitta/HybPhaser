@@ -1,8 +1,8 @@
 ---
-title: "Getting Started with HybPhaser"
+title: "HybPhaser Example Workflow"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Getting Started with HybPhaser}
+  %\VignetteIndexEntry{HybPhaser Example Workflow}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -16,6 +16,14 @@ knitr::opts_chunk$set(
 
 ```{r setup}
 library(HybPhaser)
+
+# Check if Docker is available for this vignette
+has_docker <- check_docker(quiet = TRUE)
+has_image <- FALSE
+if (has_docker) {
+  has_image <- check_docker_image("joelnitta/hybphaser:latest", 
+                                   pull = FALSE)
+}
 ```
 
 ## Introduction
@@ -38,202 +46,56 @@ This vignette demonstrates the package workflow using the functions
 currently available. Additional functionality is being added as the 
 package conversion continues.
 
-## Prerequisites
+## Example with Test Data
 
-HybPhaser expects that you have already run HybPiper on your target 
-capture data. You need:
+HybPhaser can download the official HybPiper test dataset on demand. You can
+run HybPiper on that data via conda, then use the resulting real HybPiper
+output with HybPhaser.
 
-- HybPiper output directory containing assembled sequences for each sample
-- A FASTA file with target sequences (baits)
-- A namelist file with sample names (one per line)
+The example below is the full end-to-end workflow:
+1. Run HybPiper (conda)
+2. Generate consensus sequences (Docker)
+3. Count SNPs (R)
 
-### External Dependencies
+If HybPiper is installed in a conda environment (default name:
+`hybpiper_env`), you can download and run the official test dataset and
+continue directly with HybPhaser:
 
-Several command-line tools are required for the complete workflow:
+```{r eval=FALSE, echo=TRUE}
+# 0. Optional checks
+check_conda()
+check_hybpiper_conda("hybpiper_env")
+check_docker()
+check_docker_image("joelnitta/hybphaser:latest", pull = TRUE)
 
-- **BWA** (v0.0.17+) - for read mapping
-- **SAMtools** (v1.9+) - for processing alignments
-- **Bcftools** (v1.9+) - for variant calling
-- **BBMap/BBSplit** (v38.87+) - for clade association and phasing
-
-## Step 1: Generate Consensus Sequences
-
-Before using the R functions, you need to generate consensus sequences 
-from your HybPiper output. HybPhaser includes bash scripts that handle 
-this step.
-
-### Accessing the Scripts
-
-```{r}
-# Get path to the consensus sequence generation script
-script <- hybphaser_scripts("1_generate_consensus_sequences.sh")
-script
-
-# List all available scripts
-list.files(hybphaser_scripts())
-```
-
-### Running the Script
-
-The script can be run from the command line or from within R:
-
-```{r eval=FALSE}
-# Preview the command (doesn't actually run it)
-run_hybphaser_script(
-  "1_generate_consensus_sequences.sh",
-  args = c(
-    "-n", "path/to/namelist.txt",
-    "-p", "path/to/hybpiper_output",
-    "-o", "path/to/hybphaser_output",
-    "-d", "10",    # Minimum coverage depth
-    "-f", "0.15",  # Minimum allele frequency
-    "-a", "4"      # Minimum allele count
-  ),
-  dry_run = TRUE
+# 1. Download and run official HybPiper test data using conda
+hp_data <- run_hybpiper_test_dataset(
+  output_dir = tempfile("hybpiper_test_"),
+  samples = c("EG30"),
+  conda_env = "hybpiper_env",
+  cpu = 1,
+  mapper = "bwa"
 )
-```
 
-This script:
-- Collects reads and contigs from HybPiper output
-- Maps reads to contigs using BWA
-- Calls variants with Bcftools
-- Generates consensus sequences with ambiguity codes for heterozygous 
-  sites
+# 2. Generate consensus sequences with HybPhaser Docker workflow
+run_generate_consensus_sequences(
+  hybpiper_dir = hp_data$hybpiper_dir,
+  output_dir = file.path(hp_data$hybpiper_dir, "hybphaser_output"),
+  namelist = hp_data$namelist,
+  threads = 1
+)
 
-## Step 2: Count SNPs in Consensus Sequences
-
-Once consensus sequences are generated, we can count SNPs (polymorphic 
-sites marked as ambiguity codes) across samples and loci.
-
-### Setting Up
-
-First, let's create a minimal example to demonstrate the workflow:
-
-```{r}
-# Create temporary directory structure
-temp_dir <- tempfile()
-dir.create(file.path(temp_dir, "01_data", "sample1", "consensus"), 
-           recursive = TRUE)
-
-# Create a simple target file
-target_file <- file.path(temp_dir, "targets.fasta")
-writeLines(c(
-  ">species1-gene1",
-  "ATCGATCGATCGATCGATCG",
-  ">species1-gene2", 
-  "GCTAGCTAGCTAGCTAGCTA"
-), target_file)
-
-# Create consensus sequences with some SNPs
-# Gene1: has SNPs (R and Y are ambiguity codes)
-writeLines(c(
-  ">gene1",
-  "ATCGATRYATCGATCGATCG"
-), file.path(temp_dir, "01_data", "sample1", "consensus", "gene1.fasta"))
-
-# Gene2: no SNPs (clean sequence)
-writeLines(c(
-  ">gene2",
-  "GCTAGCTAGCTAGCTAGCTA"
-), file.path(temp_dir, "01_data", "sample1", "consensus", "gene2.fasta"))
-
-# Create namelist
-namelist <- file.path(temp_dir, "namelist.txt")
-writeLines("sample1", namelist)
-```
-
-### Running SNP Count
-
-```{r}
-# Count SNPs across all samples and loci
-results <- count_snps(
-  path_to_output_folder = temp_dir,
-  fasta_file_with_targets = target_file,
+# 3. Count SNPs
+snp_results <- count_snps(
+  path_to_output_folder = file.path(hp_data$hybpiper_dir, "hybphaser_output"),
+  fasta_file_with_targets = hp_data$targets_file,
   targets_file_format = "DNA",
-  path_to_namelist = namelist,
-  intronerated_contig = FALSE
-)
-```
-
-### Understanding the Results
-
-The function returns two data frames:
-
-```{r}
-# SNP proportions per locus and sample
-results$tab_snps
-
-# Sequence lengths per locus and sample  
-results$tab_length
-```
-
-The SNP proportion indicates the level of heterozygosity:
-
-- **Low values (< 0.01)** suggest non-hybrid samples or homozygous 
-  regions
-- **High values (> 0.02)** may indicate hybrids or paralogous genes
-- **Very high values (> 0.05)** often suggest assembly issues or 
-  contamination
-
-### Saved Output
-
-Results are automatically saved as R objects for downstream analysis:
-
-```{r}
-# Check what was saved
-list.files(file.path(temp_dir, "00_R_objects"), recursive = TRUE)
-```
-
-These can be loaded in subsequent steps:
-
-```{r eval=FALSE}
-# Load saved results
-snps <- readRDS(file.path(temp_dir, "00_R_objects", "Table_SNPs.Rds"))
-lengths <- readRDS(file.path(temp_dir, "00_R_objects", 
-                             "Table_consensus_length.Rds"))
-```
-
-## Working with Real Data
-
-With real HybPiper data, the workflow would look like:
-
-```{r eval=FALSE}
-# Count SNPs in your actual data
-my_results <- count_snps(
-  path_to_output_folder = "hybphaser_output",
-  fasta_file_with_targets = "my_targets.fasta",
-  targets_file_format = "DNA",
-  path_to_namelist = "my_samples.txt",
-  intronerated_contig = FALSE  # Set TRUE if using intronerate
+  path_to_namelist = hp_data$namelist
 )
 
-# Examine results
-head(my_results$tab_snps)
-summary(my_results$tab_snps)
-
-# Identify samples with high heterozygosity (potential hybrids)
-sample_heterozygosity <- colMeans(my_results$tab_snps, na.rm = TRUE)
-potential_hybrids <- names(sample_heterozygosity[sample_heterozygosity > 0.02])
-print(potential_hybrids)
-
-# Identify loci with high SNP rates (potential paralogs)
-locus_heterozygosity <- rowMeans(my_results$tab_snps, na.rm = TRUE)
-potential_paralogs <- names(locus_heterozygosity[locus_heterozygosity > 0.02])
-print(potential_paralogs)
-```
-
-## Using Example Data
-
-HybPhaser includes example configuration files:
-
-```{r}
-# Access example clade references
-clade_refs <- read.csv(hybphaser_example("clade_references.csv"))
-clade_refs
-
-# Access example phasing preparation file
-phasing_prep <- read.csv(hybphaser_example("phasing_prep.csv"))
-phasing_prep
+# 4. Inspect results
+head(snp_results$tab_snps)
+head(snp_results$tab_length)
 ```
 
 ## Next Steps
