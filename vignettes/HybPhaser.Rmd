@@ -62,6 +62,7 @@ The example below is the full end-to-end workflow:
 4. Assess dataset quality (R)
 5. Generate sequence lists (R)
 6. Extract mapped reads for clade association (R)
+7. Prepare/run BBSplit script for clade association (R)
 
 If HybPiper is installed in a conda environment (default name:
 `hybpiper_env`), you can download and run the official test dataset and
@@ -150,6 +151,55 @@ cat("\nSequence lists created:\n")
 cat("  Loci:", seq_lists$n_loci_files, "\n")
 cat("  Samples:", seq_lists$n_sample_files, "\n")
 cat("\nMapped reads files created:", mapped_reads$n_samples, "\n")
+
+# 8. Prepare BBSplit clade-association script
+# Requires a clade reference CSV with two columns: sample and abbreviation.
+# Here we derive a minimal example directly from generated sample sequences.
+reference_dir <- file.path(
+  hp_data$hybpiper_dir,
+  "hybphaser_output",
+  "03_sequence_lists",
+  "samples_consensus"
+)
+
+reference_files <- list.files(reference_dir, pattern = "_consensus\\.fasta$")
+reference_samples <- sub("_consensus\\.fasta$", "", reference_files)
+
+clade_reference_csv <- file.path(
+  hp_data$hybpiper_dir,
+  "hybphaser_output",
+  "04_clade_association",
+  "clade_references_example.csv"
+)
+dir.create(dirname(clade_reference_csv), recursive = TRUE, showWarnings = FALSE)
+
+utils::write.csv(
+  data.frame(
+    samples = reference_samples,
+    abb = paste0("C", seq_along(reference_samples))
+  ),
+  clade_reference_csv,
+  row.names = FALSE
+)
+
+bbsplit_job <- prepare_bbsplit_script(
+  path_to_clade_association_folder = file.path(
+    hp_data$hybpiper_dir,
+    "hybphaser_output",
+    "04_clade_association"
+  ),
+  csv_file_with_clade_reference_names = clade_reference_csv,
+  path_to_reference_sequences = reference_dir,
+  path_to_read_files_cladeassociation = file.path(
+    hp_data$hybpiper_dir,
+    "hybphaser_output",
+    "mapped_reads"
+  ),
+  read_type_cladeassociation = "single-end",
+  run_clade_association_mapping_in_R = FALSE
+)
+
+cat("\nBBSplit script prepared:", bbsplit_job$script_path, "\n")
 ```
 
 ## Next Steps
@@ -167,7 +217,8 @@ will be documented in future vignette updates.
 ## Getting Help
 
 - Function documentation: `?count_snps`, `?assess_dataset`,
-  `?generate_sequence_lists`, `?extract_mapped_reads`
+  `?generate_sequence_lists`, `?extract_mapped_reads`,
+  `?prepare_bbsplit_script`
 - Report issues: <https://github.com/LarsNauheimer/HybPhaser/issues>
 - Original HybPhaser paper: [bioRxiv preprint](
   https://www.biorxiv.org/content/10.1101/2020.10.27.354589v2)
