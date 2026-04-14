@@ -37,11 +37,13 @@ The core workflow involves:
 
 1. **SNP Assessment** - Detect hybrids by measuring heterozygosity in 
    consensus sequences
-2. **Clade Association** - Map reads to divergent reference clades
-3. **Phasing** - Separate reads according to similarity with parental 
+2. **Dataset Quality Assessment** - Filter samples and loci based on 
+   missing data and heterozygosity
+3. **Sequence List Generation** - Create organized FASTA files for loci 
+   and samples
+4. **Clade Association** - Map reads to divergent reference clades
+5. **Phasing** - Separate reads according to similarity with parental 
    clades
-4. **Sequence List Generation** - Create merged datasets for 
-   phylogenetic analysis
 
 This vignette demonstrates the package workflow using the functions 
 currently available. Additional functionality is being added as the 
@@ -58,6 +60,7 @@ The example below is the full end-to-end workflow:
 2. Generate consensus sequences (Docker)
 3. Count SNPs (R)
 4. Assess dataset quality (R)
+5. Generate sequence lists (R)
 
 If HybPiper is installed in a conda environment (default name:
 `hybpiper_env`), you can download and run the official test dataset and
@@ -113,29 +116,44 @@ assessment <- assess_dataset(
   remove_sample_outliers = TRUE
 )
 
-# 5. Inspect results
+# 5. Generate sequence lists
+# Create FASTA files organized by locus and by sample, applying quality
+# filters from dataset assessment
+seq_lists <- generate_sequence_lists(
+  path_to_output_folder = file.path(
+    hp_data$hybpiper_dir,
+    "hybphaser_output"
+  ),
+  fasta_file_with_targets = hp_data$targets_file,
+  targets_file_format = "DNA",
+  path_to_namelist = hp_data$namelist
+)
+
+# 6. Inspect results
 head(snp_results$tab_snps)
 head(snp_results$tab_length)
 head(assessment$summary_table)
+cat("\nSequence lists created:\n")
+cat("  Loci:", seq_lists$n_loci_files, "\n")
+cat("  Samples:", seq_lists$n_sample_files, "\n")
 ```
 
 ## Next Steps
 
-After counting SNPs, the typical HybPhaser workflow continues with:
+After generating sequence lists, the typical HybPhaser workflow continues 
+with:
 
-1. **Dataset Assessment** - Filter samples and loci based on 
-   heterozygosity
-2. **Sequence List Generation** - Create FASTA files for alignment
-3. **Clade Association** - Map reads to reference clades using BBSplit
-4. **Phasing** - Separate hybrid reads into parental haplotypes
-5. **Merging** - Combine phased and non-phased sequences
+1. **Clade Association** - Map reads to reference clades using BBSplit
+2. **Phasing** - Separate hybrid reads into parental haplotypes
+3. **Merging** - Combine phased and non-phased sequences
 
 These additional functions are being converted to the package format and 
 will be documented in future vignette updates.
 
 ## Getting Help
 
-- Function documentation: `?count_snps`, `?assess_dataset`
+- Function documentation: `?count_snps`, `?assess_dataset`,
+  `?generate_sequence_lists`
 - Report issues: <https://github.com/LarsNauheimer/HybPhaser/issues>
 - Original HybPhaser paper: [bioRxiv preprint](
   https://www.biorxiv.org/content/10.1101/2020.10.27.354589v2)
