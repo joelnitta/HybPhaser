@@ -64,6 +64,7 @@ The example below is the full end-to-end workflow:
 6. Extract mapped reads for clade association (R)
 7. Prepare/run BBSplit script for clade association (R)
 8. Collate BBSplit results (R)
+9. Prepare/run BBSplit script for phasing (R)
 
 If HybPiper is installed in a conda environment (default name:
 `hybpiper_env`), you can download and run the official test dataset and
@@ -218,16 +219,56 @@ clade_assoc <- collate_bbsplit_results(
 )
 
 head(clade_assoc$table_clade_association)
+
+# 10. Prepare phasing script
+# Create a minimal phasing prep CSV. In real analyses this table usually
+# includes multiple references per sample (ref1/abb1, ref2/abb2, ...).
+phasing_prep_csv <- file.path(
+  hp_data$hybpiper_dir,
+  "hybphaser_output",
+  "05_phasing",
+  "phasing_prep_example.csv"
+)
+dir.create(dirname(phasing_prep_csv), recursive = TRUE, showWarnings = FALSE)
+
+utils::write.csv(
+  data.frame(
+    sample = reference_samples[[1]],
+    ref1 = reference_samples[[1]],
+    abb1 = "A"
+  ),
+  phasing_prep_csv,
+  row.names = FALSE
+)
+
+phasing_job <- prepare_phasing_script(
+  path_to_phasing_folder = file.path(
+    hp_data$hybpiper_dir,
+    "hybphaser_output",
+    "05_phasing"
+  ),
+  csv_file_with_phasing_prep_info = phasing_prep_csv,
+  path_to_read_files_phasing = file.path(
+    hp_data$hybpiper_dir,
+    "hybphaser_output",
+    "mapped_reads"
+  ),
+  read_type_4phasing = "single-end",
+  reference_sequence_folder = reference_dir,
+  run_bash_script_in_R = TRUE,
+  docker_fallback = TRUE
+)
+
+cat("\nPhasing script prepared:", phasing_job$script_path, "\n")
 ```
 
 ## Next Steps
 
-After generating sequence lists and mapped read files, the typical HybPhaser
+After clade-association and phasing script preparation, the typical HybPhaser
 workflow continues with:
 
-1. **Clade Association** - Map reads to reference clades using BBSplit
-2. **Phasing** - Separate hybrid reads into parental haplotypes
-3. **Merging** - Combine phased and non-phased sequences
+1. **Phasing result collation** - Summarize phased-read mapping outcomes
+2. **Merging** - Combine phased and non-phased sequences
 
 These additional functions are being converted to the package format and 
 will be documented in future vignette updates.
@@ -236,7 +277,8 @@ will be documented in future vignette updates.
 
 - Function documentation: `?count_snps`, `?assess_dataset`,
   `?generate_sequence_lists`, `?extract_mapped_reads`,
-  `?prepare_bbsplit_script`, `?collate_bbsplit_results`
+  `?prepare_bbsplit_script`, `?collate_bbsplit_results`,
+  `?prepare_phasing_script`, `?prepare_phasing_script_from_config`
 - Report issues: <https://github.com/LarsNauheimer/HybPhaser/issues>
 - Original HybPhaser paper: [bioRxiv preprint](
   https://www.biorxiv.org/content/10.1101/2020.10.27.354589v2)
