@@ -172,6 +172,44 @@ test_that("prepare_bbsplit_script can execute generated script", {
 })
 
 
+test_that("prepare_bbsplit_script reports missing bbsplit for run mode", {
+  skip_if(Sys.which("bbsplit.sh") != "", "bbsplit.sh is available on PATH")
+
+  tmp <- tempfile()
+  dir.create(tmp)
+
+  refs <- file.path(tmp, "refs")
+  reads <- file.path(tmp, "reads")
+  out <- file.path(tmp, "out")
+  dir.create(refs)
+  dir.create(reads)
+
+  writeLines(c(">ref1", "ATCG"), file.path(refs, "ref1_consensus.fasta"))
+  clade_refs <- file.path(tmp, "clade_refs.csv")
+  utils::write.csv(
+    data.frame(samples = "ref1", abb = "R1"),
+    clade_refs,
+    row.names = FALSE
+  )
+  writeLines(c("@r1", "AAAA"), file.path(reads, "sample1.fastq"))
+
+  expect_error(
+    prepare_bbsplit_script(
+      path_to_clade_association_folder = out,
+      csv_file_with_clade_reference_names = clade_refs,
+      path_to_reference_sequences = refs,
+      path_to_read_files_cladeassociation = reads,
+      read_type_cladeassociation = "single-end",
+      run_clade_association_mapping_in_R = TRUE,
+      docker_fallback = FALSE
+    ),
+    "bbsplit.sh not found on PATH"
+  )
+
+  unlink(tmp, recursive = TRUE)
+})
+
+
 test_that("prepare_bbsplit_script_from_config reads config values", {
   tmp <- tempfile()
   dir.create(tmp)

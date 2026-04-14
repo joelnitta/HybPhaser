@@ -24,6 +24,11 @@
 #'   generated script in R.
 #' @param java_memory_usage_clade_association Optional Java memory text for
 #'   BBSplit (e.g., `"2G"`, `"512m"`).
+#' @param docker_fallback Logical; if `TRUE` and local `bbsplit.sh` is not
+#'   available, execute BBSplit commands via Docker. Default `TRUE`.
+#' @param docker_image Docker image used for fallback execution. Default is
+#'   `"joelnitta/hybphaser:latest"`.
+#' @param pull_image Logical; if `TRUE`, pull Docker image when not available.
 #'
 #' @return Invisibly returns a list with script path, generated commands,
 #'   selected read files, stats folder, and run status.
@@ -51,7 +56,10 @@ prepare_bbsplit_script <- function(
   path_to_bbmap = "",
   no_of_threads = 1,
   run_clade_association_mapping_in_R = FALSE,
-  java_memory_usage_clade_association = ""
+  java_memory_usage_clade_association = "",
+  docker_fallback = TRUE,
+  docker_image = "joelnitta/hybphaser:latest",
+  pull_image = FALSE
 ) {
   validate_paths(
     paths = list(
@@ -122,6 +130,17 @@ prepare_bbsplit_script <- function(
   bbsplit_sh <- "bbsplit.sh"
   if (path_to_bbmap != "") {
     bbsplit_sh <- file.path(path_to_bbmap, "bbsplit.sh")
+    if (!file.exists(bbsplit_sh)) {
+      stop("Could not find bbsplit.sh at: ", bbsplit_sh)
+    }
+  }
+
+  local_bbsplit <- ""
+  if (path_to_bbmap == "") {
+    local_bbsplit <- Sys.which("bbsplit.sh")
+    if (local_bbsplit != "") {
+      bbsplit_sh <- local_bbsplit
+    }
   }
 
   script_path <- file.path(
@@ -147,7 +166,36 @@ prepare_bbsplit_script <- function(
 
   run_status <- NA_integer_
   if (isTRUE(run_clade_association_mapping_in_R)) {
-    run_status <- system2(script_path, stdout = "", stderr = "")
+    local_exec_available <- path_to_bbmap != "" || local_bbsplit != ""
+
+    if (local_exec_available) {
+      run_status <- system2(script_path, stdout = "", stderr = "")
+    } else if (isTRUE(docker_fallback)) {
+      if (!check_docker(quiet = TRUE)) {
+        stop("Docker is not available for BBSplit fallback execution")
+      }
+      if (!check_docker_image(docker_image, pull = pull_image)) {
+        stop(
+          "Docker image '",
+          docker_image,
+          "' not found. Set pull_image = TRUE to download it."
+        )
+      }
+
+      run_status <- run_bbsplit_commands_in_docker(
+        commands = commands,
+        bbsplit_sh = bbsplit_sh,
+        path_to_reference_sequences = path_to_reference_sequences,
+        path_to_read_files_cladeassociation = path_to_read_files_cladeassociation,
+        folder_bbsplit_stats = folder_bbsplit_stats,
+        docker_image = docker_image
+      )
+    } else {
+      stop(
+        "bbsplit.sh not found on PATH. Install BBMap, provide path_to_bbmap,",
+        " or set docker_fallback = TRUE."
+      )
+    }
   }
 
   invisible(list(
@@ -157,6 +205,66 @@ prepare_bbsplit_script <- function(
     stats_folder = folder_bbsplit_stats,
     run_status = run_status
   ))
+}
+
+
+# Execute prepared BBSplit commands in Docker by remapping host paths.
+run_bbsplit_commands_in_docker <- function(
+  commands,
+  bbsplit_sh,
+  path_to_reference_sequences,
+  path_to_read_files_cladeassociation,
+  folder_bbsplit_stats,
+  docker_image
+) {
+  volumes <- c(
+    "/data/refs" = path_to_reference_sequences,
+    "/data/reads" = path_to_read_files_cladeassociation,
+    "/data/stats" = folder_bbsplit_stats
+  )
+
+  run_status <- 0L
+  for (cmd in commands) {
+    docker_cmd <- cmd
+    docker_cmd <- sub("^\\S+", "bbsplit.sh", docker_cmd)
+    if (bbsplit_sh != "bbsplit.sh") {
+      docker_cmd <- gsub(bbsplit_sh, "bbsplit.sh", docker_cmd, fixed = TRUE)
+    }
+    docker_cmd <- gsub(
+      path_to_reference_sequences,
+      "/data/refs",
+      docker_cmd,
+      fixed = TRUE
+    )
+    docker_cmd <- gsub(
+      path_to_read_files_cladeassociation,
+      "/data/reads",
+      docker_cmd,
+      fixed = TRUE
+    )
+    docker_cmd <- gsub(
+      folder_bbsplit_stats,
+      "/data/stats",
+      docker_cmd,
+      fixed = TRUE
+    )
+
+    cmd_args <- strsplit(trimws(docker_cmd), "[[:space:]]+")[[1]]
+    status_i <- .run_docker(
+      cmd = cmd_args,
+      volumes = volumes,
+      image = docker_image,
+      stdout = "",
+      stderr = ""
+    )
+
+    if (status_i != 0) {
+      run_status <- as.integer(status_i)
+      break
+    }
+  }
+
+  run_status
 }
 
 

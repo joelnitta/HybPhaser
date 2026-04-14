@@ -63,6 +63,7 @@ The example below is the full end-to-end workflow:
 5. Generate sequence lists (R)
 6. Extract mapped reads for clade association (R)
 7. Prepare/run BBSplit script for clade association (R)
+8. Collate BBSplit results (R)
 
 If HybPiper is installed in a conda environment (default name:
 `hybpiper_env`), you can download and run the official test dataset and
@@ -196,10 +197,27 @@ bbsplit_job <- prepare_bbsplit_script(
     "mapped_reads"
   ),
   read_type_cladeassociation = "single-end",
-  run_clade_association_mapping_in_R = FALSE
+  run_clade_association_mapping_in_R = TRUE,
+  docker_fallback = TRUE
 )
 
 cat("\nBBSplit script prepared:", bbsplit_job$script_path, "\n")
+
+# 9. Collate BBSplit results
+clade_assoc <- collate_bbsplit_results(
+  path_to_clade_association_folder = file.path(
+    hp_data$hybpiper_dir,
+    "hybphaser_output",
+    "04_clade_association"
+  ),
+  csv_file_with_clade_reference_names = clade_reference_csv,
+  path_to_output_folder = file.path(
+    hp_data$hybpiper_dir,
+    "hybphaser_output"
+  )
+)
+
+head(clade_assoc$table_clade_association)
 ```
 
 ## Next Steps
@@ -218,7 +236,7 @@ will be documented in future vignette updates.
 
 - Function documentation: `?count_snps`, `?assess_dataset`,
   `?generate_sequence_lists`, `?extract_mapped_reads`,
-  `?prepare_bbsplit_script`
+  `?prepare_bbsplit_script`, `?collate_bbsplit_results`
 - Report issues: <https://github.com/LarsNauheimer/HybPhaser/issues>
 - Original HybPhaser paper: [bioRxiv preprint](
   https://www.biorxiv.org/content/10.1101/2020.10.27.354589v2)

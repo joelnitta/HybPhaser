@@ -16,7 +16,10 @@ prepare_bbsplit_script(
   path_to_bbmap = "",
   no_of_threads = 1,
   run_clade_association_mapping_in_R = FALSE,
-  java_memory_usage_clade_association = ""
+  java_memory_usage_clade_association = "",
+  docker_fallback = TRUE,
+  docker_image = "joelnitta/hybphaser:latest",
+  pull_image = FALSE
 )
 }
 \arguments{
@@ -52,6 +55,14 @@ generated script in R.}
 
 \item{java_memory_usage_clade_association}{Optional Java memory text for
 BBSplit (e.g., \code{"2G"}, \code{"512m"}).}
+
+\item{docker_fallback}{Logical; if \code{TRUE} and local \code{bbsplit.sh} is not
+available, execute BBSplit commands via Docker. Default \code{TRUE}.}
+
+\item{docker_image}{Docker image used for fallback execution. Default is
+\code{"joelnitta/hybphaser:latest"}.}
+
+\item{pull_image}{Logical; if \code{TRUE}, pull Docker image when not available.}
 }
 \value{
 Invisibly returns a list with script path, generated commands,
