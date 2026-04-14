@@ -65,6 +65,7 @@ The example below is the full end-to-end workflow:
 7. Prepare/run BBSplit script for clade association (R)
 8. Collate BBSplit results (R)
 9. Prepare/run BBSplit script for phasing (R)
+10. Collate phasing BBSplit stats (R)
 
 If HybPiper is installed in a conda environment (default name:
 `hybpiper_env`), you can download and run the official test dataset and
@@ -260,15 +261,26 @@ phasing_job <- prepare_phasing_script(
 )
 
 cat("\nPhasing script prepared:", phasing_job$script_path, "\n")
+
+# 11. Collate phasing stats
+phasing_stats <- collate_phasing_stats(
+  path_to_phasing_folder = file.path(
+    hp_data$hybpiper_dir,
+    "hybphaser_output",
+    "05_phasing"
+  ),
+  csv_file_with_phasing_prep_info = phasing_prep_csv
+)
+
+head(phasing_stats$table_phasing_stats)
 ```
 
 ## Next Steps
 
-After clade-association and phasing script preparation, the typical HybPhaser
+After clade-association and phasing stats collation, the typical HybPhaser
 workflow continues with:
 
-1. **Phasing result collation** - Summarize phased-read mapping outcomes
-2. **Merging** - Combine phased and non-phased sequences
+1. **Merging** - Combine phased and non-phased sequences
 
 These additional functions are being converted to the package format and 
 will be documented in future vignette updates.
@@ -278,7 +290,8 @@ will be documented in future vignette updates.
 - Function documentation: `?count_snps`, `?assess_dataset`,
   `?generate_sequence_lists`, `?extract_mapped_reads`,
   `?prepare_bbsplit_script`, `?collate_bbsplit_results`,
-  `?prepare_phasing_script`, `?prepare_phasing_script_from_config`
+  `?prepare_phasing_script`, `?prepare_phasing_script_from_config`,
+  `?collate_phasing_stats`, `?collate_phasing_stats_from_config`
 - Report issues: <https://github.com/LarsNauheimer/HybPhaser/issues>
 - Original HybPhaser paper: [bioRxiv preprint](
   https://www.biorxiv.org/content/10.1101/2020.10.27.354589v2)
