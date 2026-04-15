@@ -10,7 +10,8 @@ run_hybpiper_test_dataset(
   conda_env = "hybpiper_env",
   cpu = 1,
   keep_fastq = FALSE,
-  mapper = c("bwa", "blast")
+  mapper = c("bwa", "blast"),
+  other_args = character(0)
 )
 }
 \arguments{

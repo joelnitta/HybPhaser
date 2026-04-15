@@ -128,6 +128,31 @@ check_docker_image <- function(
 }
 
 
+#' Compute the relative path from a base to a target directory
+#'
+#' Returns the relative portion of `path` with respect to `base`, using
+#' forward slashes, if `path` is a strict descendant of `base`.
+#' Returns `NULL` when `path` is the same as `base` or is not nested
+#' inside it.
+#'
+#' @param path  Character; absolute path of the target.
+#' @param base  Character; absolute path of the base directory.
+#'
+#' @return Character relative path (no leading `/`), or `NULL`.
+#' @keywords internal
+.relative_path <- function(path, base) {
+  path <- gsub("\\\\", "/", path)
+  base <- gsub("\\\\", "/", base)
+  base <- sub("/$", "", base)
+  prefix <- paste0(base, "/")
+  if (startsWith(path, prefix) && nchar(path) > nchar(prefix)) {
+    substring(path, nchar(prefix) + 1L)
+  } else {
+    NULL
+  }
+}
+
+
 #' Run Docker Container with HybPhaser
 #'
 #' Internal function to execute commands in HybPhaser Docker container

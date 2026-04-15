@@ -1,2 +1,5 @@
 /doc/
 /Meta/
+_targets*
+targets_hybpiper_test
+targets_test_data

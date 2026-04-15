@@ -19,6 +19,8 @@ Imports:
     seqinr (>= 4.2),
     stringr (>= 1.4)
 Suggests: 
+    targets,
+    tarchetypes,
     testthat (>= 3.0.0),
     knitr,
     rmarkdown

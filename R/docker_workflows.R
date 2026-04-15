@@ -77,12 +77,6 @@ run_generate_consensus_sequences <- function(
     stop("HybPiper directory not found: ", hybpiper_dir)
   }
 
-  # Create output directory if needed
-  if (!dir.exists(output_dir)) {
-    dir.create(output_dir, recursive = TRUE)
-    message("Created output directory: ", output_dir)
-  }
-
   # Validate namelist if provided
   if (!is.null(namelist) && !file.exists(namelist)) {
     stop("Namelist file not found: ", namelist)
@@ -91,19 +85,47 @@ run_generate_consensus_sequences <- function(
   # Get absolute paths
   hybpiper_abs <- .normalize_docker_path(hybpiper_dir)
   output_abs <- .normalize_docker_path(output_dir)
+  hybpiper_norm <- normalizePath(hybpiper_abs, mustWork = FALSE)
+  output_norm <- normalizePath(output_abs, mustWork = FALSE)
 
-  # Set up volume mounts
-  volumes <- c(
-    "/data/hybpiper" = hybpiper_abs,
-    "/data/output" = output_abs
-  )
+  # Determine Docker volume mounts and the container-side output path.
+  #
+  # Docker Desktop on macOS (VirtioFS) has a bug: a directory created on the
+  # host immediately before a container starts appears in the parent directory
+  # listing inside the container, but the directory itself cannot be opened
+  # for writes by the container process (ENOENT / "No such file or directory").
+  #
+  # The reliable fix when output_dir is NESTED inside hybpiper_dir:
+  #   - mount only hybpiper_dir as /data/hybpiper
+  #   - reference the output as /data/hybpiper/<rel>
+  #   - let Docker's own mkdir -p create the subdirectory (Docker-created
+  #     directories are reliably accessible)
+  #
+  # When output_dir is OUTSIDE hybpiper_dir a separate bind mount is used and
+  # the directory is pre-created on the host first (standard approach).
+  rel <- .relative_path(output_norm, hybpiper_norm)
 
-  # Build command arguments
+  if (!is.null(rel)) {
+    # output inside hybpiper_dir: single bind mount, Docker creates subdir
+    volumes <- c("/data/hybpiper" = hybpiper_abs)
+    container_output <- paste0("/data/hybpiper/", rel)
+  } else {
+    # output outside hybpiper_dir: pre-create + separate bind mount
+    if (!dir.exists(output_dir)) {
+      dir.create(output_dir, recursive = TRUE)
+      message("Created output directory: ", output_dir)
+    }
+    volumes <- c(
+      "/data/hybpiper" = hybpiper_abs,
+      "/data/output" = output_abs
+    )
+    container_output <- "/data/output"
+  }
+
+  # Build command
   cmd <- c("/opt/hybphaser/1_generate_consensus_sequences.sh")
-
-  # Add options
   cmd <- c(cmd, "-p", "/data/hybpiper")
-  cmd <- c(cmd, "-o", "/data/output")
+  cmd <- c(cmd, "-o", container_output)
   cmd <- c(cmd, "-t", as.character(threads))
   cmd <- c(cmd, "-d", as.character(min_depth))
   cmd <- c(cmd, "-f", as.character(min_allele_freq))
@@ -112,14 +134,11 @@ run_generate_consensus_sequences <- function(
   if (intronerate) {
     cmd <- c(cmd, "-i")
   }
-
   if (cleanup) {
     cmd <- c(cmd, "-c")
   }
 
-  # Handle sample/namelist
   if (!is.null(namelist)) {
-    # Copy namelist to a temp location and mount it
     namelist_abs <- .normalize_docker_path(namelist)
     volumes["/data/namelist.txt"] <- namelist_abs
     cmd <- c(cmd, "-n", "/data/namelist.txt")
@@ -127,7 +146,6 @@ run_generate_consensus_sequences <- function(
     cmd <- c(cmd, "-s", sample)
   }
 
-  # Run Docker command
   message("Running consensus sequence generation in Docker...")
   message("Command: ", paste(cmd, collapse = " "))
 
@@ -143,12 +161,14 @@ run_generate_consensus_sequences <- function(
     message("Consensus sequences generated successfully")
     message("Output directory: ", output_dir)
   } else {
-    warning("Consensus sequence generation failed with exit code: ", result)
+    warning(
+      "Consensus sequence generation failed with exit code: ",
+      result
+    )
   }
 
   invisible(result)
 }
-
 
 #' Extract Mapped Reads via Docker
 #'

@@ -399,7 +399,8 @@ run_hybpiper_test_dataset <- function(
   conda_env = "hybpiper_env",
   cpu = 1,
   keep_fastq = FALSE,
-  mapper = c("bwa", "blast")
+  mapper = c("bwa", "blast"),
+  other_args = character(0)
 ) {
   mapper <- match.arg(mapper)
 
@@ -455,7 +456,8 @@ run_hybpiper_test_dataset <- function(
       wd = output_dir,
       mapper = mapper,
       cpu = cpu,
-      conda_env = conda_env
+      conda_env = conda_env,
+      other_args = other_args
     )
 
     if (!keep_fastq) {
