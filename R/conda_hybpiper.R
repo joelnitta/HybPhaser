@@ -468,9 +468,9 @@ run_hybpiper_test_dataset <- function(
   message("HybPiper test dataset run complete")
 
   list(
-    hybpiper_dir = output_dir,
-    targets_file = targets_out,
-    namelist = namelist_out,
+    hybpiper_dir = normalizePath(output_dir, mustWork = TRUE),
+    targets_file = normalizePath(targets_out, mustWork = TRUE),
+    namelist = normalizePath(namelist_out, mustWork = TRUE),
     samples = samples
   )
 }

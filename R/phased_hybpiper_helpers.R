@@ -85,7 +85,7 @@ run_phased_hybpiper <- function(
     }
   }
 
-  phased_hp_dir
+  normalizePath(phased_hp_dir, mustWork = TRUE)
 }
 
 
@@ -135,5 +135,5 @@ make_phased_namelist <- function(
   dir.create(phased_hp_dir, recursive = TRUE, showWarnings = FALSE)
   out_file <- file.path(phased_hp_dir, output_filename)
   writeLines(phased_samples, out_file)
-  out_file
+  normalizePath(out_file, mustWork = TRUE)
 }

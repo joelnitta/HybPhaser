@@ -274,34 +274,39 @@ targets::tar_dir({
         # part 4 merge sequence lists ----
         tar_target(
           merged_sequence_lists,
-          merge_sequence_lists(
-            path_to_sequence_lists_normal = file.path(
-              hybphaser_output_dir,
-              "03_sequence_lists",
-              "loci_consensus"
-            ),
-            path_to_sequence_lists_phased = file.path(
-              phased_hybphaser_output,
-              "03_sequence_lists",
-              "loci_consensus"
-            ),
-            path_of_sequence_lists_output = file.path(
-              hybphaser_output_dir,
-              "03_sequence_lists_merged",
-              "loci_consensus"
-            ),
-            path_to_namelist_normal = namelist,
-            path_to_namelist_phased = phased_namelist,
-            exchange_phased_with_not_phased_samples = "yes",
-            include_phased_seqlists_when_non_phased_locus_absent = "no"
-          )
+          {
+            # enforce that both normal and phased sequence lists are generated
+            sequence_lists
+            phased_sequence_lists
+            merge_sequence_lists(
+              path_to_sequence_lists_normal = file.path(
+                hybphaser_output_dir,
+                "03_sequence_lists",
+                "loci_consensus"
+              ),
+              path_to_sequence_lists_phased = file.path(
+                phased_hybphaser_output,
+                "03_sequence_lists",
+                "loci_consensus"
+              ),
+              path_of_sequence_lists_output = file.path(
+                hybphaser_output_dir,
+                "03_sequence_lists_merged",
+                "loci_consensus"
+              ),
+              path_to_namelist_normal = namelist,
+              path_to_namelist_phased = phased_namelist,
+              exchange_phased_with_not_phased_samples = "yes",
+              include_phased_seqlists_when_non_phased_locus_absent = "no"
+            )
+          }
         )
       )
     },
     script = "_targets.R",
     ask = FALSE
   )
-  tar_make()
+  targets::tar_make()
 })
 ```
 

@@ -30,7 +30,7 @@ write_clade_reference_csv <- function(reference_samples, output_file) {
     row.names = FALSE
   )
 
-  output_file
+  normalizePath(output_file, mustWork = TRUE)
 }
 
 
@@ -77,7 +77,7 @@ write_phasing_prep_csv <- function(
     row.names = FALSE
   )
 
-  output_file
+  normalizePath(output_file, mustWork = TRUE)
 }
 
 
@@ -137,7 +137,7 @@ generate_sequence_lists_after_assessment <- function(assessment, ...) {
 get_reference_samples <- function(
   sequence_lists,
   reference_dir,
-  pattern = "_consensus\\\\.fasta$"
+  pattern = "_consensus\\.fasta$"
 ) {
   if (is.null(sequence_lists)) {
     stop("'sequence_lists' must be provided.")

@@ -72,5 +72,5 @@ run_consensus_sequences <- function(
     )
   }
 
-  output_dir
+  normalizePath(output_dir, mustWork = TRUE)
 }
