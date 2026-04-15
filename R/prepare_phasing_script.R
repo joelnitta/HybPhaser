@@ -1,7 +1,7 @@
-#' Prepare BBSplit Phasing Script
+#' Run BBSplit Phasing
 #'
 #' Generates an executable bash script for the BBSplit phasing step and
-#' optionally executes it.
+#' executes it.
 #'
 #' @param path_to_phasing_folder Path to phasing output folder.
 #' @param csv_file_with_phasing_prep_info CSV with sample and reference
@@ -20,7 +20,6 @@
 #'   If empty, `bbsplit.sh` is expected on `PATH`.
 #' @param no_of_threads_phasing Number of threads for BBSplit. Use `0` or
 #'   `"auto"` to omit thread argument.
-#' @param run_bash_script_in_R Logical; if `TRUE`, run generated commands.
 #' @param java_memory_usage_phasing Optional Java memory (e.g., `"2G"`).
 #' @param docker_fallback Logical; if `TRUE` and local `bbsplit.sh` is not
 #'   available, execute phasing commands via Docker.
@@ -30,7 +29,7 @@
 #' @return Invisibly returns a list with script path, commands, output folders,
 #'   selected samples, and run status.
 #' @export
-prepare_phasing_script <- function(
+run_phasing <- function(
   path_to_phasing_folder,
   csv_file_with_phasing_prep_info,
   path_to_read_files_phasing,
@@ -42,7 +41,6 @@ prepare_phasing_script <- function(
   folder_for_phasing_stats = "",
   path_to_bbmap_executables = "",
   no_of_threads_phasing = 1,
-  run_bash_script_in_R = FALSE,
   java_memory_usage_phasing = "",
   docker_fallback = TRUE,
   docker_image = "joelnitta/hybphaser:latest",
@@ -157,40 +155,37 @@ prepare_phasing_script <- function(
   writeLines(c("#!/bin/bash", phasing_commands), phasing_script_file)
   Sys.chmod(phasing_script_file, mode = "0755")
 
-  run_status <- NA_integer_
-  if (isTRUE(run_bash_script_in_R)) {
-    local_exec_available <- path_to_bbmap_executables != "" ||
-      local_bbsplit != ""
+  local_exec_available <- path_to_bbmap_executables != "" ||
+    local_bbsplit != ""
 
-    if (local_exec_available) {
-      run_status <- system2(phasing_script_file, stdout = "", stderr = "")
-    } else if (isTRUE(docker_fallback)) {
-      if (!check_docker(quiet = TRUE)) {
-        stop("Docker is not available for phasing fallback execution")
-      }
-      if (!check_docker_image(docker_image, pull = pull_image)) {
-        stop(
-          "Docker image '",
-          docker_image,
-          "' not found. Set pull_image = TRUE to download it."
-        )
-      }
-
-      run_status <- run_phasing_commands_in_docker(
-        commands = phasing_commands,
-        bbsplit_sh = bbsplit_sh,
-        reference_sequence_folder = reference_sequence_folder,
-        path_to_read_files_phasing = path_to_read_files_phasing,
-        folder_for_phased_reads = folder_for_phased_reads,
-        folder_for_phasing_stats = folder_for_phasing_stats,
-        docker_image = docker_image
-      )
-    } else {
+  if (local_exec_available) {
+    run_status <- system2(phasing_script_file, stdout = "", stderr = "")
+  } else if (isTRUE(docker_fallback)) {
+    if (!check_docker(quiet = TRUE)) {
+      stop("Docker is not available for phasing fallback execution")
+    }
+    if (!check_docker_image(docker_image, pull = pull_image)) {
       stop(
-        "bbsplit.sh not found on PATH. Install BBMap, provide ",
-        "path_to_bbmap_executables, or set docker_fallback = TRUE."
+        "Docker image '",
+        docker_image,
+        "' not found. Set pull_image = TRUE to download it."
       )
     }
+
+    run_status <- run_phasing_commands_in_docker(
+      commands = phasing_commands,
+      bbsplit_sh = bbsplit_sh,
+      reference_sequence_folder = reference_sequence_folder,
+      path_to_read_files_phasing = path_to_read_files_phasing,
+      folder_for_phased_reads = folder_for_phased_reads,
+      folder_for_phasing_stats = folder_for_phasing_stats,
+      docker_image = docker_image
+    )
+  } else {
+    stop(
+      "bbsplit.sh not found on PATH. Install BBMap, provide ",
+      "path_to_bbmap_executables, or set docker_fallback = TRUE."
+    )
   }
 
   invisible(list(
@@ -204,16 +199,16 @@ prepare_phasing_script <- function(
 }
 
 
-#' Prepare Phasing Script Using a HybPhaser Config File
+#' Run BBSplit Phasing Using a HybPhaser Config File
 #'
 #' Reads required phasing settings from `config.txt` and runs
-#' `prepare_phasing_script()`.
+#' `run_phasing()`.
 #'
 #' @param config_file Path to HybPhaser configuration file.
 #'
-#' @return Invisibly returns the same object as `prepare_phasing_script()`.
+#' @return Invisibly returns the same object as `run_phasing()`.
 #' @export
-prepare_phasing_script_from_config <- function(config_file = "./config.txt") {
+run_phasing_from_config <- function(config_file = "./config.txt") {
   required <- c(
     "path_to_phasing_folder",
     "csv_file_with_phasing_prep_info",
@@ -226,13 +221,12 @@ prepare_phasing_script_from_config <- function(config_file = "./config.txt") {
     "folder_for_phasing_stats",
     "path_to_bbmap_executables",
     "no_of_threads_phasing",
-    "run_bash_script_in_R",
     "java_memory_usage_phasing"
   )
 
   cfg <- read_config(config_file, required_vars = required)
 
-  prepare_phasing_script(
+  run_phasing(
     path_to_phasing_folder = cfg$path_to_phasing_folder,
     csv_file_with_phasing_prep_info = cfg$csv_file_with_phasing_prep_info,
     path_to_read_files_phasing = cfg$path_to_read_files_phasing,
@@ -244,7 +238,6 @@ prepare_phasing_script_from_config <- function(config_file = "./config.txt") {
     folder_for_phasing_stats = cfg$folder_for_phasing_stats,
     path_to_bbmap_executables = cfg$path_to_bbmap_executables,
     no_of_threads_phasing = cfg$no_of_threads_phasing,
-    run_bash_script_in_R = tolower(cfg$run_bash_script_in_R) == "yes",
     java_memory_usage_phasing = cfg$java_memory_usage_phasing
   )
 }

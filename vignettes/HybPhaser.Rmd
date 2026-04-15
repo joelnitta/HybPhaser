@@ -68,12 +68,12 @@ The example below is the full end-to-end workflow:
 *Part 2 — Clade association*
 
 6. Extract mapped reads for clade association (Docker)
-7. Prepare/run BBSplit script for clade association (R)
+7. Run BBSplit clade association (R)
 8. Collate BBSplit results (R)
 
 *Part 3 — Phasing*
 
-9. Prepare/run BBSplit script for phasing (R)
+9. Run BBSplit phasing (R)
 10. Collate phasing BBSplit stats (R)
 
 *Part 1 repeated — SNP assessment on phased reads*
@@ -173,7 +173,7 @@ cat("  Loci:", seq_lists$n_loci_files, "\n")
 cat("  Samples:", seq_lists$n_sample_files, "\n")
 cat("\nMapped reads files created:", mapped_reads$n_samples, "\n")
 
-# 8. Prepare BBSplit clade-association script
+# 8. Run BBSplit clade association
 # Requires a clade reference CSV with two columns: sample and abbreviation.
 # Here we derive a minimal example directly from generated sample sequences.
 reference_dir <- file.path(
@@ -203,7 +203,7 @@ utils::write.csv(
   row.names = FALSE
 )
 
-bbsplit_job <- prepare_bbsplit_script(
+bbsplit_job <- run_clade_association(
   path_to_clade_association_folder = file.path(
     hp_data$hybpiper_dir,
     "hybphaser_output",
@@ -217,11 +217,12 @@ bbsplit_job <- prepare_bbsplit_script(
     "mapped_reads"
   ),
   read_type_cladeassociation = "single-end",
-  run_clade_association_mapping_in_R = TRUE,
   docker_fallback = TRUE
 )
 
-cat("\nBBSplit script prepared:", bbsplit_job$script_path, "\n")
+cat("\nBBSplit clade association run completed:\n")
+cat("  Script:", bbsplit_job$script_path, "\n")
+cat("  Status:", bbsplit_job$run_status, "\n")
 
 # 9. Collate BBSplit results
 clade_assoc <- collate_bbsplit_results(
@@ -239,7 +240,7 @@ clade_assoc <- collate_bbsplit_results(
 
 head(clade_assoc$table_clade_association)
 
-# 10. Prepare phasing script
+# 10. Run phasing
 # Create a minimal phasing prep CSV. In real analyses this table usually
 # includes multiple references per sample (ref1/abb1, ref2/abb2, ...).
 phasing_prep_csv <- file.path(
@@ -260,7 +261,7 @@ utils::write.csv(
   row.names = FALSE
 )
 
-phasing_job <- prepare_phasing_script(
+phasing_job <- run_phasing(
   path_to_phasing_folder = file.path(
     hp_data$hybpiper_dir,
     "hybphaser_output",
@@ -274,11 +275,12 @@ phasing_job <- prepare_phasing_script(
   ),
   read_type_4phasing = "single-end",
   reference_sequence_folder = reference_dir,
-  run_bash_script_in_R = TRUE,
   docker_fallback = TRUE
 )
 
-cat("\nPhasing script prepared:", phasing_job$script_path, "\n")
+cat("\nPhasing run completed:\n")
+cat("  Script:", phasing_job$script_path, "\n")
+cat("  Status:", phasing_job$run_status, "\n")
 
 # 11. Collate phasing stats
 phasing_stats <- collate_phasing_stats(
@@ -413,8 +415,9 @@ Additional utility functions will continue to be added in future updates.
 
 - Function documentation: `?count_snps`, `?assess_dataset`,
   `?generate_sequence_lists`, `?extract_mapped_reads`,
-  `?prepare_bbsplit_script`, `?collate_bbsplit_results`,
-  `?prepare_phasing_script`, `?prepare_phasing_script_from_config`,
+  `?run_clade_association`, `?run_clade_association_from_config`,
+  `?collate_bbsplit_results`,
+  `?run_phasing`, `?run_phasing_from_config`,
   `?collate_phasing_stats`, `?collate_phasing_stats_from_config`,
   `?merge_sequence_lists`, `?merge_sequence_lists_from_config`
 - Report issues: <https://github.com/LarsNauheimer/HybPhaser/issues>

@@ -1,7 +1,7 @@
-#' Prepare BBSplit Script for Clade Association
+#' Run BBSplit Clade Association
 #'
-#' Generates an executable bash script to run BBSplit for clade association.
-#' Optionally executes the generated script directly from R.
+#' Generates an executable bash script to run BBSplit for clade association
+#' and executes the generated commands from R.
 #'
 #' @param path_to_clade_association_folder Path to clade association output
 #'   folder.
@@ -20,8 +20,6 @@
 #'   is expected on `PATH`.
 #' @param no_of_threads Number of threads for BBSplit. Use `0` or `"auto"`
 #'   to omit thread argument.
-#' @param run_clade_association_mapping_in_R Logical; if `TRUE`, run the
-#'   generated script in R.
 #' @param java_memory_usage_clade_association Optional Java memory text for
 #'   BBSplit (e.g., `"2G"`, `"512m"`).
 #' @param docker_fallback Logical; if `TRUE` and local `bbsplit.sh` is not
@@ -36,7 +34,7 @@
 #'
 #' @examples
 #' \dontrun{
-#' result <- prepare_bbsplit_script(
+#' result <- run_clade_association(
 #'   path_to_clade_association_folder = "04_clade_association",
 #'   csv_file_with_clade_reference_names = "clade_references.csv",
 #'   path_to_reference_sequences = "03_sequence_lists/samples_consensus",
@@ -44,7 +42,7 @@
 #'   read_type_cladeassociation = "single-end"
 #' )
 #' }
-prepare_bbsplit_script <- function(
+run_clade_association <- function(
   path_to_clade_association_folder,
   csv_file_with_clade_reference_names,
   path_to_reference_sequences,
@@ -55,7 +53,6 @@ prepare_bbsplit_script <- function(
   file_with_samples_included = "",
   path_to_bbmap = "",
   no_of_threads = 1,
-  run_clade_association_mapping_in_R = FALSE,
   java_memory_usage_clade_association = "",
   docker_fallback = TRUE,
   docker_image = "joelnitta/hybphaser:latest",
@@ -164,38 +161,35 @@ prepare_bbsplit_script <- function(
   writeLines(c("#!/bin/bash", commands), script_path)
   Sys.chmod(script_path, mode = "0755")
 
-  run_status <- NA_integer_
-  if (isTRUE(run_clade_association_mapping_in_R)) {
-    local_exec_available <- path_to_bbmap != "" || local_bbsplit != ""
+  local_exec_available <- path_to_bbmap != "" || local_bbsplit != ""
 
-    if (local_exec_available) {
-      run_status <- system2(script_path, stdout = "", stderr = "")
-    } else if (isTRUE(docker_fallback)) {
-      if (!check_docker(quiet = TRUE)) {
-        stop("Docker is not available for BBSplit fallback execution")
-      }
-      if (!check_docker_image(docker_image, pull = pull_image)) {
-        stop(
-          "Docker image '",
-          docker_image,
-          "' not found. Set pull_image = TRUE to download it."
-        )
-      }
-
-      run_status <- run_bbsplit_commands_in_docker(
-        commands = commands,
-        bbsplit_sh = bbsplit_sh,
-        path_to_reference_sequences = path_to_reference_sequences,
-        path_to_read_files_cladeassociation = path_to_read_files_cladeassociation,
-        folder_bbsplit_stats = folder_bbsplit_stats,
-        docker_image = docker_image
-      )
-    } else {
+  if (local_exec_available) {
+    run_status <- system2(script_path, stdout = "", stderr = "")
+  } else if (isTRUE(docker_fallback)) {
+    if (!check_docker(quiet = TRUE)) {
+      stop("Docker is not available for BBSplit fallback execution")
+    }
+    if (!check_docker_image(docker_image, pull = pull_image)) {
       stop(
-        "bbsplit.sh not found on PATH. Install BBMap, provide path_to_bbmap,",
-        " or set docker_fallback = TRUE."
+        "Docker image '",
+        docker_image,
+        "' not found. Set pull_image = TRUE to download it."
       )
     }
+
+    run_status <- run_bbsplit_commands_in_docker(
+      commands = commands,
+      bbsplit_sh = bbsplit_sh,
+      path_to_reference_sequences = path_to_reference_sequences,
+      path_to_read_files_cladeassociation = path_to_read_files_cladeassociation,
+      folder_bbsplit_stats = folder_bbsplit_stats,
+      docker_image = docker_image
+    )
+  } else {
+    stop(
+      "bbsplit.sh not found on PATH. Install BBMap, provide path_to_bbmap,",
+      " or set docker_fallback = TRUE."
+    )
   }
 
   invisible(list(
@@ -268,17 +262,17 @@ run_bbsplit_commands_in_docker <- function(
 }
 
 
-#' Prepare BBSplit Script Using a HybPhaser Config File
+#' Run BBSplit Clade Association Using a HybPhaser Config File
 #'
-#' Reads clade-association variables from a HybPhaser config file and prepares
-#' the BBSplit script.
+#' Reads clade-association variables from a HybPhaser config file and runs
+#' BBSplit clade association.
 #'
 #' @param config_file Path to HybPhaser configuration file.
 #'
 #' @return Invisibly returns a list with script path, commands, selected read
 #'   files, stats folder, and run status.
 #' @export
-prepare_bbsplit_script_from_config <- function(config_file = "./config.txt") {
+run_clade_association_from_config <- function(config_file = "./config.txt") {
   required <- c(
     "path_to_clade_association_folder",
     "csv_file_with_clade_reference_names",
@@ -290,13 +284,12 @@ prepare_bbsplit_script_from_config <- function(config_file = "./config.txt") {
     "file_with_samples_included",
     "path_to_bbmap",
     "no_of_threads_clade_association",
-    "run_clade_association_mapping_in_R",
     "java_memory_usage_clade_association"
   )
 
   cfg <- read_config(config_file, required_vars = required)
 
-  prepare_bbsplit_script(
+  run_clade_association(
     path_to_clade_association_folder = cfg$path_to_clade_association_folder,
     csv_file_with_clade_reference_names = cfg$csv_file_with_clade_reference_names,
     path_to_reference_sequences = cfg$path_to_reference_sequences,
@@ -307,10 +300,6 @@ prepare_bbsplit_script_from_config <- function(config_file = "./config.txt") {
     file_with_samples_included = cfg$file_with_samples_included,
     path_to_bbmap = cfg$path_to_bbmap,
     no_of_threads = cfg$no_of_threads_clade_association,
-    run_clade_association_mapping_in_R = tolower(
-      cfg$run_clade_association_mapping_in_R
-    ) ==
-      "yes",
     java_memory_usage_clade_association = cfg$java_memory_usage_clade_association
   )
 }

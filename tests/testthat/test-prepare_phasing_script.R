@@ -1,4 +1,4 @@
-test_that("prepare_phasing_script validates paired-end IDs", {
+test_that("run_phasing validates paired-end IDs", {
   tmp <- tempfile()
   dir.create(tmp)
 
@@ -17,7 +17,7 @@ test_that("prepare_phasing_script validates paired-end IDs", {
   )
 
   expect_error(
-    prepare_phasing_script(
+    run_phasing(
       path_to_phasing_folder = out,
       csv_file_with_phasing_prep_info = prep,
       path_to_read_files_phasing = reads,
@@ -31,7 +31,7 @@ test_that("prepare_phasing_script validates paired-end IDs", {
 })
 
 
-test_that("prepare_phasing_script builds single-end commands", {
+test_that("run_phasing builds and runs single-end commands", {
   tmp <- tempfile()
   dir.create(tmp)
 
@@ -58,12 +58,19 @@ test_that("prepare_phasing_script builds single-end commands", {
   writeLines(c("@r1", "AAAA"), file.path(reads, "S1.fastq"))
   writeLines(c("@r2", "CCCC"), file.path(reads, "S2.fastq"))
 
-  res <- prepare_phasing_script(
+  bbmap <- file.path(tmp, "bbmap")
+  dir.create(bbmap)
+  fake_bbsplit <- file.path(bbmap, "bbsplit.sh")
+  writeLines(c("#!/bin/bash", "exit 0"), fake_bbsplit)
+  Sys.chmod(fake_bbsplit, mode = "0755")
+
+  res <- run_phasing(
     path_to_phasing_folder = out,
     csv_file_with_phasing_prep_info = prep,
     path_to_read_files_phasing = reads,
     read_type_4phasing = "single-end",
     reference_sequence_folder = refs,
+    path_to_bbmap_executables = bbmap,
     no_of_threads_phasing = 2,
     java_memory_usage_phasing = "1G"
   )
@@ -74,12 +81,13 @@ test_that("prepare_phasing_script builds single-end commands", {
   expect_true(all(grepl("threads=2", res$commands, fixed = TRUE)))
   expect_true(all(grepl("-Xmx1G", res$commands, fixed = TRUE)))
   expect_true(any(grepl("basename=.*S1_to_%.fastq", res$commands)))
+  expect_equal(res$run_status, 0)
 
   unlink(tmp, recursive = TRUE)
 })
 
 
-test_that("prepare_phasing_script builds paired-end commands", {
+test_that("run_phasing builds paired-end commands", {
   tmp <- tempfile()
   dir.create(tmp)
 
@@ -101,25 +109,33 @@ test_that("prepare_phasing_script builds paired-end commands", {
   writeLines(c("@r1", "AAAA"), file.path(reads, "S1_R1.fastq"))
   writeLines(c("@r1", "TTTT"), file.path(reads, "S1_R2.fastq"))
 
-  res <- prepare_phasing_script(
+  bbmap <- file.path(tmp, "bbmap")
+  dir.create(bbmap)
+  fake_bbsplit <- file.path(bbmap, "bbsplit.sh")
+  writeLines(c("#!/bin/bash", "exit 0"), fake_bbsplit)
+  Sys.chmod(fake_bbsplit, mode = "0755")
+
+  res <- run_phasing(
     path_to_phasing_folder = out,
     csv_file_with_phasing_prep_info = prep,
     path_to_read_files_phasing = reads,
     read_type_4phasing = "paired-end",
     ID_read_pair1 = "_R1.fastq",
     ID_read_pair2 = "_R2.fastq",
-    reference_sequence_folder = refs
+    reference_sequence_folder = refs,
+    path_to_bbmap_executables = bbmap
   )
 
   expect_equal(length(res$commands), 1)
   expect_true(grepl("in=.*S1_R1.fastq", res$commands[[1]]))
   expect_true(grepl("in2=.*S1_R2.fastq", res$commands[[1]]))
+  expect_equal(res$run_status, 0)
 
   unlink(tmp, recursive = TRUE)
 })
 
 
-test_that("prepare_phasing_script can execute generated script", {
+test_that("run_phasing can execute generated script", {
   tmp <- tempfile()
   dir.create(tmp)
 
@@ -146,14 +162,13 @@ test_that("prepare_phasing_script can execute generated script", {
   writeLines(c("#!/bin/bash", "exit 0"), fake_bbsplit)
   Sys.chmod(fake_bbsplit, mode = "0755")
 
-  res <- prepare_phasing_script(
+  res <- run_phasing(
     path_to_phasing_folder = out,
     csv_file_with_phasing_prep_info = prep,
     path_to_read_files_phasing = reads,
     read_type_4phasing = "single-end",
     reference_sequence_folder = refs,
-    path_to_bbmap_executables = bbmap,
-    run_bash_script_in_R = TRUE
+    path_to_bbmap_executables = bbmap
   )
 
   expect_equal(res$run_status, 0)
@@ -163,7 +178,7 @@ test_that("prepare_phasing_script can execute generated script", {
 })
 
 
-test_that("prepare_phasing_script_from_config reads config values", {
+test_that("run_phasing_from_config reads config values", {
   tmp <- tempfile()
   dir.create(tmp)
 
@@ -182,6 +197,12 @@ test_that("prepare_phasing_script_from_config reads config values", {
   )
   writeLines(c("@r1", "AAAA"), file.path(reads, "S1.fastq"))
 
+  bbmap <- file.path(tmp, "bbmap")
+  dir.create(bbmap)
+  fake_bbsplit <- file.path(bbmap, "bbsplit.sh")
+  writeLines(c("#!/bin/bash", "exit 0"), fake_bbsplit)
+  Sys.chmod(fake_bbsplit, mode = "0755")
+
   cfg <- file.path(tmp, "config.txt")
   writeLines(
     c(
@@ -194,17 +215,17 @@ test_that("prepare_phasing_script_from_config reads config values", {
       paste0("reference_sequence_folder = ", dQuote(refs)),
       'folder_for_phased_reads = ""',
       'folder_for_phasing_stats = ""',
-      'path_to_bbmap_executables = ""',
+      paste0("path_to_bbmap_executables = ", dQuote(bbmap)),
       'no_of_threads_phasing = "auto"',
-      'run_bash_script_in_R = "no"',
       'java_memory_usage_phasing = ""'
     ),
     cfg
   )
 
-  res <- prepare_phasing_script_from_config(cfg)
+  res <- run_phasing_from_config(cfg)
   expect_true(file.exists(res$script_path))
   expect_equal(length(res$commands), 1)
+  expect_equal(res$run_status, 0)
 
   unlink(tmp, recursive = TRUE)
 })

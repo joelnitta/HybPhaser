@@ -307,7 +307,8 @@ Read files vary in the proportion of reads that match the target sequences, whic
 
 ## 2.3.	BBSplit script preparation / execution
 
-The R script **2a_prepare_bbsplit_results.R** can be used to generate the executable command line files that run the clade association mapping. It can also execute the script in R.
+The R script **2a_prepare_bbsplit_results.R** generates the executable
+command line file for clade-association mapping and runs it directly from R.
 
 Variables to be set in the configuration file **config.txt**: 
 -	`path_to_clade_association_folder`: path to the clade association output folder (e.g. `"/path/to/hybphaser_output/04_clade_association/"`)
@@ -320,7 +321,6 @@ Variables to be set in the configuration file **config.txt**:
 -	`file_with_samples_included`: only needed if not all read files in selected folder should be used. set path to text file that contains a list of all samples included (e.g., `""`, or `"/path/to/list_with_samples.txt"`)
 -	`path_to_bbmap`: set folder to bbmap binaries, if bbmap is not in your path variable
 -	`no_of_threads`: set number of threads/cores to be used for BBSplit (default is `1`)
--	`run_clade_association_mapping_in_R`: select whether the script is run directly in R (`“yes”`) or whether to run it manually from command line using the generated script (`"no"`) 
 -	`java_memory_usage_clade_association`: only needed when needed when java -Xmx error comes up. Should be max. 85% of physical memory (e.g. `"2G"` for 2 GB or `"512m"` for 512 MB)
 
 
@@ -356,7 +356,8 @@ The file needs to be a comma separated file with the following header (columns):
 
 
 ## 3.2. BBSplit phasing script preparation and execution
-The script **3a_prepare_phasing_script.R** can be used to generate the command line script that executes the BBSplit phasing step, or it can be run inside the R script. 
+The script **3a_prepare_phasing_script.R** generates the command line script
+for BBSplit phasing and executes it directly from R.
 
 **Variables to set in config.txt:**
 -	`path_to_phasing_folder`: set folder for phasing output (e.g. `"path/to/hybphaser_output/05_phasing/"`)
@@ -368,7 +369,6 @@ The script **3a_prepare_phasing_script.R** can be used to generate the command l
 -	`reference_sequence_folder`: set folder for reference sequences (e.g. `".../03_sequence_lists/samples_consensus/"`)
 -	`path_to_bbmap_executables`: set path to bbmap executables (if not in path)
 -	`no_of_threads_phasing`: set number of maximum used threads/cores (default is `1`)
--	`run_bash_script_in_R`:  select whether the script is run directly in R (`“yes”`) or whether to run it manually from command line using the generated script (`"no"`) 
 -	`java_memory_usage_phasing`: only needed when needed when java -Xmx error comes up. Should be max. 85% of physical memory (e.g. `"2G"` for 2 GB or `"512m"` for 512 MB)
 
 

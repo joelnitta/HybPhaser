@@ -1,6 +1,6 @@
-test_that("prepare_bbsplit_script validates inputs", {
+test_that("run_clade_association validates inputs", {
   expect_error(
-    prepare_bbsplit_script(
+    run_clade_association(
       path_to_clade_association_folder = tempdir(),
       csv_file_with_clade_reference_names = "/missing/ref.csv",
       path_to_reference_sequences = tempdir(),
@@ -22,7 +22,7 @@ test_that("prepare_bbsplit_script validates inputs", {
   writeLines(c(">s1", "ATCG"), file.path(refs, "s1_consensus.fasta"))
 
   expect_error(
-    prepare_bbsplit_script(
+    run_clade_association(
       path_to_clade_association_folder = out,
       csv_file_with_clade_reference_names = csv,
       path_to_reference_sequences = refs,
@@ -36,7 +36,7 @@ test_that("prepare_bbsplit_script validates inputs", {
 })
 
 
-test_that("prepare_bbsplit_script creates single-end commands", {
+test_that("run_clade_association creates and runs single-end commands", {
   tmp <- tempfile()
   dir.create(tmp)
 
@@ -59,7 +59,14 @@ test_that("prepare_bbsplit_script creates single-end commands", {
   writeLines(c("@r1", "AAAA"), file.path(reads, "sample1.fastq"))
   writeLines(c("@r2", "CCCC"), file.path(reads, "sample2.fastq"))
 
-  result <- prepare_bbsplit_script(
+  fake_bbsplit <- file.path(tmp, "bbsplit.sh")
+  writeLines(c("#!/bin/bash", "exit 0"), fake_bbsplit)
+  Sys.chmod(fake_bbsplit, mode = "0755")
+  old_path <- Sys.getenv("PATH")
+  on.exit(Sys.setenv(PATH = old_path), add = TRUE)
+  Sys.setenv(PATH = paste(tmp, old_path, sep = .Platform$path.sep))
+
+  result <- run_clade_association(
     path_to_clade_association_folder = out,
     csv_file_with_clade_reference_names = clade_refs,
     path_to_reference_sequences = refs,
@@ -74,6 +81,7 @@ test_that("prepare_bbsplit_script creates single-end commands", {
   expect_true(any(grepl("ref_R1=", result$commands, fixed = TRUE)))
   expect_true(all(grepl("threads=2", result$commands, fixed = TRUE)))
   expect_true(all(grepl("-Xmx1G", result$commands, fixed = TRUE)))
+  expect_equal(result$run_status, 0)
 
   script_lines <- readLines(result$script_path)
   expect_equal(script_lines[[1]], "#!/bin/bash")
@@ -83,7 +91,7 @@ test_that("prepare_bbsplit_script creates single-end commands", {
 })
 
 
-test_that("prepare_bbsplit_script filters paired-end reads by namelist", {
+test_that("run_clade_association filters paired-end reads by namelist", {
   tmp <- tempfile()
   dir.create(tmp)
 
@@ -109,7 +117,14 @@ test_that("prepare_bbsplit_script filters paired-end reads by namelist", {
   include <- file.path(tmp, "samples.txt")
   writeLines("s2", include)
 
-  result <- prepare_bbsplit_script(
+  fake_bbsplit <- file.path(tmp, "bbsplit.sh")
+  writeLines(c("#!/bin/bash", "exit 0"), fake_bbsplit)
+  Sys.chmod(fake_bbsplit, mode = "0755")
+  old_path <- Sys.getenv("PATH")
+  on.exit(Sys.setenv(PATH = old_path), add = TRUE)
+  Sys.setenv(PATH = paste(tmp, old_path, sep = .Platform$path.sep))
+
+  result <- run_clade_association(
     path_to_clade_association_folder = out,
     csv_file_with_clade_reference_names = clade_refs,
     path_to_reference_sequences = refs,
@@ -124,12 +139,13 @@ test_that("prepare_bbsplit_script filters paired-end reads by namelist", {
   expect_true(grepl("s2_R1.fastq", result$commands[[1]], fixed = TRUE))
   expect_true(grepl("s2_R2.fastq", result$commands[[1]], fixed = TRUE))
   expect_false(grepl("s1_R1.fastq", result$commands[[1]], fixed = TRUE))
+  expect_equal(result$run_status, 0)
 
   unlink(tmp, recursive = TRUE)
 })
 
 
-test_that("prepare_bbsplit_script can execute generated script", {
+test_that("run_clade_association can execute generated script", {
   tmp <- tempfile()
   dir.create(tmp)
 
@@ -155,14 +171,13 @@ test_that("prepare_bbsplit_script can execute generated script", {
   writeLines(c("#!/bin/bash", "exit 0"), fake_bbsplit)
   Sys.chmod(fake_bbsplit, mode = "0755")
 
-  result <- prepare_bbsplit_script(
+  result <- run_clade_association(
     path_to_clade_association_folder = out,
     csv_file_with_clade_reference_names = clade_refs,
     path_to_reference_sequences = refs,
     path_to_read_files_cladeassociation = reads,
     read_type_cladeassociation = "single-end",
-    path_to_bbmap = bbmap,
-    run_clade_association_mapping_in_R = TRUE
+    path_to_bbmap = bbmap
   )
 
   expect_equal(result$run_status, 0)
@@ -172,7 +187,7 @@ test_that("prepare_bbsplit_script can execute generated script", {
 })
 
 
-test_that("prepare_bbsplit_script reports missing bbsplit for run mode", {
+test_that("run_clade_association reports missing bbsplit for run mode", {
   skip_if(Sys.which("bbsplit.sh") != "", "bbsplit.sh is available on PATH")
 
   tmp <- tempfile()
@@ -194,13 +209,12 @@ test_that("prepare_bbsplit_script reports missing bbsplit for run mode", {
   writeLines(c("@r1", "AAAA"), file.path(reads, "sample1.fastq"))
 
   expect_error(
-    prepare_bbsplit_script(
+    run_clade_association(
       path_to_clade_association_folder = out,
       csv_file_with_clade_reference_names = clade_refs,
       path_to_reference_sequences = refs,
       path_to_read_files_cladeassociation = reads,
       read_type_cladeassociation = "single-end",
-      run_clade_association_mapping_in_R = TRUE,
       docker_fallback = FALSE
     ),
     "bbsplit.sh not found on PATH"
@@ -210,7 +224,7 @@ test_that("prepare_bbsplit_script reports missing bbsplit for run mode", {
 })
 
 
-test_that("prepare_bbsplit_script_from_config reads config values", {
+test_that("run_clade_association_from_config reads config values", {
   tmp <- tempfile()
   dir.create(tmp)
 
@@ -229,6 +243,12 @@ test_that("prepare_bbsplit_script_from_config reads config values", {
   )
   writeLines(c("@r1", "AAAA"), file.path(reads, "sample1.fastq"))
 
+  bbmap <- file.path(tmp, "bbmap")
+  dir.create(bbmap)
+  fake_bbsplit <- file.path(bbmap, "bbsplit.sh")
+  writeLines(c("#!/bin/bash", "exit 0"), fake_bbsplit)
+  Sys.chmod(fake_bbsplit, mode = "0755")
+
   cfg <- file.path(tmp, "config.txt")
   writeLines(
     c(
@@ -240,17 +260,17 @@ test_that("prepare_bbsplit_script_from_config reads config values", {
       'ID_read_pair1 = ""',
       'ID_read_pair2 = ""',
       'file_with_samples_included = ""',
-      'path_to_bbmap = ""',
+      paste0("path_to_bbmap = ", dQuote(bbmap)),
       'no_of_threads_clade_association = "auto"',
-      'run_clade_association_mapping_in_R = "no"',
       'java_memory_usage_clade_association = ""'
     ),
     cfg
   )
 
-  result <- prepare_bbsplit_script_from_config(cfg)
+  result <- run_clade_association_from_config(cfg)
   expect_true(file.exists(result$script_path))
   expect_equal(length(result$commands), 1)
+  expect_equal(result$run_status, 0)
 
   unlink(tmp, recursive = TRUE)
 })
