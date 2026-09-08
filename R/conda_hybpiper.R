@@ -146,6 +146,24 @@ run_conda <- function(
 }
 
 
+#' Command hint shown when HybPiper is missing from a conda environment
+#'
+#' conda-forge is listed before bioconda (the bioconda-recommended channel
+#' order); getting it wrong pulls mis-built dependencies such as GNU
+#' `parallel`.
+#'
+#' @param env_name Character; conda environment name
+#' @return Character; a one-line `conda install` suggestion
+#' @noRd
+.hybpiper_install_hint <- function(env_name) {
+  paste0(
+    "Install it with: conda install -n ",
+    env_name,
+    " -c conda-forge -c bioconda hybpiper"
+  )
+}
+
+
 #' Check if HybPiper is Available in a Conda Environment
 #'
 #' Verifies that `hybpiper` can be executed from the specified conda
@@ -189,9 +207,8 @@ check_hybpiper_conda <- function(env_name = "hybpiper_env", quiet = FALSE) {
     warning(
       "HybPiper is not available in conda env '",
       env_name,
-      "'. Install with: conda install -n ",
-      env_name,
-      " -c bioconda hybpiper"
+      "'. ",
+      .hybpiper_install_hint(env_name)
     )
   }
   FALSE
@@ -251,9 +268,8 @@ hybpiper_assemble <- function(
     stop(
       "HybPiper not found in conda environment '",
       conda_env,
-      "'. Install it with: conda install -n ",
-      conda_env,
-      " -c bioconda hybpiper"
+      "'. ",
+      .hybpiper_install_hint(conda_env)
     )
   }
 
@@ -784,9 +800,8 @@ hybpiper_stats <- function(
     stop(
       "HybPiper not found in conda environment '",
       conda_env,
-      "'. Install it with: conda install -n ",
-      conda_env,
-      " -c bioconda hybpiper"
+      "'. ",
+      .hybpiper_install_hint(conda_env)
     )
   }
 
