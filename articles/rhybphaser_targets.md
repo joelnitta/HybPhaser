@@ -319,8 +319,9 @@ also drops loci whose mean SNP proportion across samples is an outlier
 (putative paralogs). `loci_removed_paralogs_all` lists them — empty here
 because nothing crossed the threshold in this small example.
 
-The same information is written as figures under `02_assessment/`, e.g.
-locus heterozygosity vs allele divergence:
+[`assess_dataset()`](https://joelnitta.github.io/rhybphaser/reference/assess_dataset.md)
+also writes this as a plot (`02_assessment/3_LH_vs_AD.png`); the same
+view of the summary table:
 
 ### Clade association
 
