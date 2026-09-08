@@ -215,27 +215,33 @@ check_docker_image <- function(
   }
 
   user <- .docker_user()
-  user_args <- if (is.null(user)) character(0) else c("--user", user)
 
-  # Give the container a writable working directory. The image's WORKDIR
-  # (/data) is not writable when running as an arbitrary --user, and some
-  # tools (BBSplit) write index files relative to the working directory.
-  work_dir <- tempfile("rhybphaser-work-")
-  dir.create(work_dir, recursive = TRUE)
-  on.exit(unlink(work_dir, recursive = TRUE), add = TRUE)
-  work_args <- c(
-    "-v",
-    paste0(.normalize_docker_path(work_dir), ":/work"),
-    "--workdir",
-    "/work"
-  )
+  # On Linux the container runs as the host user (see .docker_user()), which
+  # cannot write to the image's WORKDIR (/data). Give it a writable working
+  # directory so tools that write relative to it (BBSplit's index) work.
+  # macOS/Windows keep the image's own WORKDIR: it is writable there and
+  # avoids routing BBSplit's many small index files through the slow
+  # Docker Desktop bind-mount filesystem.
+  extra_args <- character(0)
+  if (!is.null(user)) {
+    work_dir <- tempfile("rhybphaser-work-")
+    dir.create(work_dir, recursive = TRUE)
+    on.exit(unlink(work_dir, recursive = TRUE), add = TRUE)
+    extra_args <- c(
+      "--user",
+      user,
+      "-v",
+      paste0(.normalize_docker_path(work_dir), ":/work"),
+      "--workdir",
+      "/work"
+    )
+  }
 
   # Build docker run command
   docker_args <- c(
     "run",
     "--rm", # Remove container after exit
-    user_args,
-    work_args,
+    extra_args,
     volume_args,
     image,
     cmd
