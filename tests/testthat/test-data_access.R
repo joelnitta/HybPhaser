@@ -6,7 +6,7 @@ test_that("hybphaser_scripts returns scripts directory", {
 })
 
 test_that("hybphaser_scripts returns path to specific script", {
-  skip_if_not_installed("HybPhaser")
+  skip_if_not_installed("rhybphaser")
 
   script_path <- hybphaser_scripts("1_generate_consensus_sequences.sh")
   expect_type(script_path, "character")
@@ -14,7 +14,7 @@ test_that("hybphaser_scripts returns path to specific script", {
 })
 
 test_that("hybphaser_scripts errors on nonexistent script", {
-  skip_if_not_installed("HybPhaser")
+  skip_if_not_installed("rhybphaser")
 
   expect_error(
     hybphaser_scripts("nonexistent_script.sh"),
@@ -28,7 +28,7 @@ test_that("hybphaser_example returns extdata directory", {
 })
 
 test_that("hybphaser_example returns path to specific file", {
-  skip_if_not_installed("HybPhaser")
+  skip_if_not_installed("rhybphaser")
 
   file_path <- hybphaser_example("clade_references.csv")
   expect_type(file_path, "character")
@@ -36,7 +36,7 @@ test_that("hybphaser_example returns path to specific file", {
 })
 
 test_that("hybphaser_example errors on nonexistent file", {
-  skip_if_not_installed("HybPhaser")
+  skip_if_not_installed("rhybphaser")
 
   expect_error(
     hybphaser_example("nonexistent_file.txt"),
@@ -45,7 +45,7 @@ test_that("hybphaser_example errors on nonexistent file", {
 })
 
 test_that("run_hybphaser_script dry_run returns command", {
-  skip_if_not_installed("HybPhaser")
+  skip_if_not_installed("rhybphaser")
 
   cmd <- run_hybphaser_script(
     "1_generate_consensus_sequences.sh",

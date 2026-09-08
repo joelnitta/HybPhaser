@@ -1,8 +1,8 @@
 ---
-title: "HybPhaser Example Workflow"
+title: "rhybphaser Example Workflow"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{HybPhaser Example Workflow}
+  %\VignetteIndexEntry{rhybphaser Example Workflow}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -15,7 +15,7 @@ knitr::opts_chunk$set(
 ```
 
 ```{r setup}
-library(HybPhaser)
+library(rhybphaser)
 
 # Check if Docker is available for this vignette
 has_docker <- check_docker(quiet = TRUE)
@@ -420,7 +420,9 @@ Additional utility functions will continue to be added in future updates.
   `?run_phasing`, `?run_phasing_from_config`,
   `?collate_phasing_stats`, `?collate_phasing_stats_from_config`,
   `?merge_sequence_lists`, `?merge_sequence_lists_from_config`
-- Report issues: <https://github.com/LarsNauheimer/HybPhaser/issues>
+- Report issues: <https://github.com/joelnitta/rhybphaser/issues>
+- Original HybPhaser method and code:
+  <https://github.com/LarsNauheimer/HybPhaser>
 - Original HybPhaser paper: [bioRxiv preprint](
   https://www.biorxiv.org/content/10.1101/2020.10.27.354589v2)
 

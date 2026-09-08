@@ -22,7 +22,7 @@ installed.
 
 ## Test 1: Access Scripts
 
-library(HybPhaser)
+library(rhybphaser)
 
 # Get path to scripts
 script <- hybphaser_scripts("1_generate_consensus_sequences.sh")

@@ -1,8 +1,8 @@
 ---
-title: "HybPhaser Workflow with targets"
+title: "rhybphaser Workflow with targets"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{HybPhaser Workflow with targets}
+  %\VignetteIndexEntry{rhybphaser Workflow with targets}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -15,7 +15,7 @@ knitr::opts_chunk$set(
 )
 
 run_targets_vignette <- identical(
-  Sys.getenv("HYBPHASER_RUN_TARGETS_VIGNETTE"),
+  Sys.getenv("RHYBPHASER_RUN_TARGETS_VIGNETTE"),
   "true"
 )
 ```
@@ -49,7 +49,7 @@ targets::tar_dir({
     {
       library(targets)
       library(tarchetypes)
-      library(HybPhaser)
+      library(rhybphaser)
 
       tar_option_set(
         format = "rds"
@@ -314,7 +314,7 @@ targets::tar_dir({
 
 - By default, this vignette does not execute during package checks.
 - To run it end-to-end while rendering, set environment variable
-  `HYBPHASER_RUN_TARGETS_VIGNETTE=true` before knitting.
+  `RHYBPHASER_RUN_TARGETS_VIGNETTE=true` before knitting.
 - The pipeline auto-generates all required input files and does not depend on
   pre-existing files in `data/`.
 - `run_consensus_sequences()` is used instead of

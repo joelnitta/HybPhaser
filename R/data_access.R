@@ -20,7 +20,7 @@
 #'   "1_generate_consensus_sequences.sh"
 #' )
 hybphaser_scripts <- function(script_name = NULL) {
-  scripts_dir <- system.file("scripts", package = "HybPhaser")
+  scripts_dir <- system.file("scripts", package = "rhybphaser")
 
   if (scripts_dir == "") {
     stop(
@@ -68,7 +68,7 @@ hybphaser_scripts <- function(script_name = NULL) {
 #' # Get path to specific example file
 #' clade_ref <- hybphaser_example("clade_references.csv")
 hybphaser_example <- function(file_name = NULL) {
-  extdata_dir <- system.file("extdata", package = "HybPhaser")
+  extdata_dir <- system.file("extdata", package = "rhybphaser")
 
   if (extdata_dir == "") {
     stop(

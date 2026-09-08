@@ -1,8 +1,11 @@
-# HybPhaser
+# rhybphaser
 
-**Version 2.1** -- R package version. This is a conversion of HybPhaser 
-to a proper R package with improved Docker integration and comprehensive 
-testing.
+**Development version (0.1.0.9000).** `rhybphaser` is an R package
+implementation of [HybPhaser](https://github.com/LarsNauheimer/HybPhaser)
+(Nauheimer et al.), converting the original collection of R and bash
+scripts into a proper R package with Docker integration and comprehensive
+testing. It is renamed from `HybPhaser` to avoid confusion with the
+original repository.
 
 HybPhaser was developed to deal with hybrids (and polyploids) in target 
 capture datasets. 
@@ -22,11 +25,11 @@ HybPhaser is available at
 
 ## Installation
 
-You can install the development version of HybPhaser from GitHub:
+You can install the development version of rhybphaser from GitHub:
 
 ```r
 # install.packages("devtools")
-devtools::install_github("LarsNauheimer/HybPhaser")
+devtools::install_github("joelnitta/rhybphaser")
 ```
 
 ### Dependencies
@@ -50,7 +53,7 @@ You can run HybPiper from conda and then continue with HybPhaser.
 ### Run Official HybPiper Test Dataset via Conda
 
 ```r
-library(HybPhaser)
+library(rhybphaser)
 
 # Check tool availability
 check_conda()
@@ -85,7 +88,7 @@ snp_results <- count_snps(
 ### With Your Data
 
 ```r
-library(HybPhaser)
+library(rhybphaser)
 
 # After running HybPiper on your samples...
 
@@ -129,7 +132,7 @@ list.files(test_data$hybpiper_dir, recursive = TRUE)
 See the package vignette for more details:
 
 ```r
-vignette("HybPhaser")
+vignette("rhybphaser")
 ```
 
 ## Data Preparation

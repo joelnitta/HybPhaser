@@ -5,13 +5,13 @@ test_that("check_docker returns logical", {
 
 test_that(".normalize_docker_path handles paths correctly", {
   # Test basic path expansion
-  path <- HybPhaser:::.normalize_docker_path("~/test")
+  path <- rhybphaser:::.normalize_docker_path("~/test")
   expect_true(grepl("test$", path))
   expect_true(!grepl("~", path))
 
   # Test absolute path passthrough
   if (.Platform$OS.type != "windows") {
-    path <- HybPhaser:::.normalize_docker_path("/tmp/test")
+    path <- rhybphaser:::.normalize_docker_path("/tmp/test")
     expect_equal(path, "/tmp/test")
   }
 })

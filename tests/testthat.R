@@ -1,5 +1,5 @@
-# Test setup for HybPhaser
+# Test setup for rhybphaser
 library(testthat)
-library(HybPhaser)
+library(rhybphaser)
 
-test_check("HybPhaser")
+test_check("rhybphaser")

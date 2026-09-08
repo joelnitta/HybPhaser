@@ -12,7 +12,7 @@ test_that(".seq_stats counts ambiguity codes correctly", {
     temp_fasta
   )
 
-  result <- HybPhaser:::.seq_stats(temp_fasta)
+  result <- rhybphaser:::.seq_stats(temp_fasta)
 
   # Length should be 19 (all characters)
   expect_equal(result[1], 19)
@@ -34,7 +34,7 @@ test_that(".seq_stats handles sequences with gaps and Ns", {
     temp_fasta
   )
 
-  result <- HybPhaser:::.seq_stats(temp_fasta)
+  result <- rhybphaser:::.seq_stats(temp_fasta)
 
   # Length should be 8 (11 - 2 N's - 1 gap)
   expect_equal(result[1], 8)
@@ -48,7 +48,7 @@ test_that(".seq_stats handles empty files", {
   temp_fasta <- tempfile(fileext = ".fasta")
   writeLines("", temp_fasta)
 
-  result <- HybPhaser:::.seq_stats(temp_fasta)
+  result <- rhybphaser:::.seq_stats(temp_fasta)
 
   expect_true(is.na(result[1]))
   expect_true(is.na(result[2]))

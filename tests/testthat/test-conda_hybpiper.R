@@ -120,7 +120,7 @@ test_that("hybpiper_stats falls back to native supercontig stats", {
       TRUE
     },
     run_conda = function(...) 1,
-    .package = "HybPhaser"
+    .package = "rhybphaser"
   )
 
   expect_warning(
@@ -202,7 +202,7 @@ test_that(".read_target_mean_lengths keeps gene names aligned with values", {
     targets_file
   )
 
-  result <- HybPhaser:::.read_target_mean_lengths(
+  result <- rhybphaser:::.read_target_mean_lengths(
     targets_file,
     dna = TRUE,
     known_genes = c("geneA_OG0001", "geneZ_OG0002")
