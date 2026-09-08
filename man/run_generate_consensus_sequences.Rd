@@ -15,7 +15,7 @@ run_generate_consensus_sequences(
   min_depth = 10,
   min_allele_freq = 0.15,
   min_allele_count = 4,
-  docker_image = "joelnitta/hybphaser:latest",
+  docker_image = "joelnitta/rhybphaser:latest",
   pull_image = FALSE
 )
 }
@@ -47,7 +47,7 @@ calling heterozygous sites. Default is 0.15.}
 allele. Default is 4.}
 
 \item{docker_image}{Docker image name. Default is
-"joelnitta/hybphaser:latest"}
+"joelnitta/rhybphaser:latest"}
 
 \item{pull_image}{Logical; if TRUE, pull Docker image if not found}
 }
@@ -56,8 +56,8 @@ Exit code (0 for success, non-zero for failure)
 }
 \description{
 Generates consensus sequences from HybPiper output by remapping reads to
-contigs and calling variants. Runs the HybPhaser bash script in a Docker
-container.
+contigs and calling variants. Runs a bundled bash script in the
+rhybphaser Docker container.
 }
 \examples{
 \dontrun{

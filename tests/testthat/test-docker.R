@@ -51,8 +51,8 @@ test_that("run_generate_consensus_sequences validates inputs", {
 test_that("run_generate_consensus_sequences creates output directory", {
   skip_if_not(check_docker(quiet = TRUE), "Docker not available")
   skip_if_not(
-    check_docker_image("joelnitta/hybphaser:latest", pull = FALSE),
-    "HybPhaser Docker image not available"
+    check_docker_image("joelnitta/rhybphaser:latest", pull = FALSE),
+    "rhybphaser Docker image not available"
   )
 
   temp_hybpiper <- tempfile()
@@ -223,8 +223,8 @@ test_that("create_real_test_dataset creates valid structure", {
 test_that("run_generate_consensus_sequences works with test data", {
   skip_if_not(check_docker(quiet = TRUE), "Docker not available")
   skip_if_not(
-    check_docker_image("joelnitta/hybphaser:latest", pull = FALSE),
-    "HybPhaser Docker image not available"
+    check_docker_image("joelnitta/rhybphaser:latest", pull = FALSE),
+    "rhybphaser Docker image not available"
   )
 
   # Create test data
@@ -262,8 +262,8 @@ test_that("run_generate_consensus_sequences works with test data", {
 test_that("count_snps works with Docker-generated consensus", {
   skip_if_not(check_docker(quiet = TRUE), "Docker not available")
   skip_if_not(
-    check_docker_image("joelnitta/hybphaser:latest", pull = FALSE),
-    "HybPhaser Docker image not available"
+    check_docker_image("joelnitta/rhybphaser:latest", pull = FALSE),
+    "rhybphaser Docker image not available"
   )
 
   # Create test data
@@ -310,8 +310,8 @@ test_that("count_snps works with Docker-generated consensus", {
 test_that("complete workflow with Docker runs end-to-end", {
   skip_if_not(check_docker(quiet = TRUE), "Docker not available")
   skip_if_not(
-    check_docker_image("joelnitta/hybphaser:latest", pull = FALSE),
-    "HybPhaser Docker image not available"
+    check_docker_image("joelnitta/rhybphaser:latest", pull = FALSE),
+    "rhybphaser Docker image not available"
   )
 
   # Create test data
@@ -372,8 +372,8 @@ test_that("complete workflow with Docker runs end-to-end", {
 test_that("run_extract_mapped_reads creates output directory", {
   skip_if_not(check_docker(quiet = TRUE), "Docker not available")
   skip_if_not(
-    check_docker_image("joelnitta/hybphaser:latest", pull = FALSE),
-    "HybPhaser Docker image not available"
+    check_docker_image("joelnitta/rhybphaser:latest", pull = FALSE),
+    "rhybphaser Docker image not available"
   )
 
   temp_base <- tempfile()

@@ -1,10 +1,8 @@
-version: '3.8'
-
 services:
-  hybphaser:
+  rhybphaser:
     build: .
-    image: hybphaser:latest
-    container_name: hybphaser
+    image: joelnitta/rhybphaser:latest
+    container_name: rhybphaser
     volumes:
       # Mount your data directory
       - ./data:/data/input

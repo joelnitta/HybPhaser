@@ -1,8 +1,8 @@
 #' Generate Consensus Sequences via Docker
 #'
 #' Generates consensus sequences from HybPiper output by remapping reads to
-#' contigs and calling variants. Runs the HybPhaser bash script in a Docker
-#' container.
+#' contigs and calling variants. Runs a bundled bash script in the
+#' rhybphaser Docker container.
 #'
 #' @param hybpiper_dir Path to HybPiper output directory (on host machine)
 #' @param output_dir Path to output directory for HybPhaser results (on host
@@ -21,7 +21,7 @@
 #' @param min_allele_count Integer; minimum number of reads supporting an
 #'   allele. Default is 4.
 #' @param docker_image Docker image name. Default is
-#'   "joelnitta/hybphaser:latest"
+#'   "joelnitta/rhybphaser:latest"
 #' @param pull_image Logical; if TRUE, pull Docker image if not found
 #'
 #' @return Exit code (0 for success, non-zero for failure)
@@ -55,7 +55,7 @@ run_generate_consensus_sequences <- function(
   min_depth = 10,
   min_allele_freq = 0.15,
   min_allele_count = 4,
-  docker_image = "joelnitta/hybphaser:latest",
+  docker_image = "joelnitta/rhybphaser:latest",
   pull_image = FALSE
 ) {
   # Validate inputs before touching Docker so path mistakes are reported
@@ -123,7 +123,7 @@ run_generate_consensus_sequences <- function(
   }
 
   # Build command
-  cmd <- c("/opt/hybphaser/1_generate_consensus_sequences.sh")
+  cmd <- c("/opt/rhybphaser/1_generate_consensus_sequences.sh")
   cmd <- c(cmd, "-p", "/data/hybpiper")
   cmd <- c(cmd, "-o", container_output)
   cmd <- c(cmd, "-t", as.character(threads))
@@ -173,8 +173,8 @@ run_generate_consensus_sequences <- function(
 #' Extract Mapped Reads via Docker
 #'
 #' Extracts and concatenates reads that mapped to target sequences from
-#' HybPiper or HybPhaser output. Runs the HybPhaser bash script in a Docker
-#' container.
+#' HybPiper or HybPhaser output. Runs a bundled bash script in the
+#' rhybphaser Docker container.
 #'
 #' @param base_dir Path to base directory containing sample data (HybPiper
 #'   or HybPhaser output)
@@ -184,7 +184,7 @@ run_generate_consensus_sequences <- function(
 #' @param remove_duplicates Logical; if TRUE, remove duplicate sequences
 #'   (not just duplicate names)
 #' @param docker_image Docker image name. Default is
-#'   "joelnitta/hybphaser:latest"
+#'   "joelnitta/rhybphaser:latest"
 #' @param pull_image Logical; if TRUE, pull Docker image if not found
 #'
 #' @return Exit code (0 for success, non-zero for failure)
@@ -211,7 +211,7 @@ run_extract_mapped_reads <- function(
   output_dir,
   namelist = NULL,
   remove_duplicates = FALSE,
-  docker_image = "joelnitta/hybphaser:latest",
+  docker_image = "joelnitta/rhybphaser:latest",
   pull_image = FALSE
 ) {
   # Validate inputs before touching Docker so path mistakes are reported
@@ -255,7 +255,7 @@ run_extract_mapped_reads <- function(
   )
 
   # Build command
-  cmd <- c("/opt/hybphaser/2_extract_mapped_reads.sh")
+  cmd <- c("/opt/rhybphaser/2_extract_mapped_reads.sh")
   cmd <- c(cmd, "-b", "/data/base")
   cmd <- c(cmd, "-o", "/data/output")
 

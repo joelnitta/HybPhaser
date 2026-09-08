@@ -1,0 +1,60 @@
+name: Docker image
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "Dockerfile"
+      - "environment.yml"
+      - "*.sh"
+      - "*.R"
+      - "config.txt"
+      - "example_files/**"
+      - ".github/workflows/docker.yml"
+  pull_request:
+    paths:
+      - "Dockerfile"
+      - "environment.yml"
+      - "*.sh"
+      - "*.R"
+      - "config.txt"
+      - "example_files/**"
+      - ".github/workflows/docker.yml"
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Detect Docker Hub credentials
+        id: creds
+        env:
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+        run: |
+          if [ -n "$DOCKERHUB_TOKEN" ] && [ "${{ github.event_name }}" = "push" ]; then
+            echo "push=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "push=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        if: steps.creds.outputs.push == 'true'
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and (on main) push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: ${{ steps.creds.outputs.push == 'true' }}
+          tags: |
+            joelnitta/rhybphaser:latest
+            joelnitta/rhybphaser:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

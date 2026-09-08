@@ -9,7 +9,7 @@ run_extract_mapped_reads(
   output_dir,
   namelist = NULL,
   remove_duplicates = FALSE,
-  docker_image = "joelnitta/hybphaser:latest",
+  docker_image = "joelnitta/rhybphaser:latest",
   pull_image = FALSE
 )
 }
@@ -26,7 +26,7 @@ NULL, processes all samples found.}
 (not just duplicate names)}
 
 \item{docker_image}{Docker image name. Default is
-"joelnitta/hybphaser:latest"}
+"joelnitta/rhybphaser:latest"}
 
 \item{pull_image}{Logical; if TRUE, pull Docker image if not found}
 }
@@ -35,8 +35,8 @@ Exit code (0 for success, non-zero for failure)
 }
 \description{
 Extracts and concatenates reads that mapped to target sequences from
-HybPiper or HybPhaser output. Runs the HybPhaser bash script in a Docker
-container.
+HybPiper or HybPhaser output. Runs a bundled bash script in the
+rhybphaser Docker container.
 }
 \examples{
 \dontrun{

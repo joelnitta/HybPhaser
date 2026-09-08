@@ -1,7 +1,13 @@
-# HybPhaser Docker Usage Guide
+# rhybphaser Docker Image
 
-This Docker image provides a complete environment for running HybPhaser with 
-all required dependencies pre-installed.
+This image bundles the external command-line tools and the bash scripts that
+the `rhybphaser` R package runs in a container
+(`run_generate_consensus_sequences()`, `run_extract_mapped_reads()`). Normally
+you do not use it directly: the R functions call `docker run` for you. This
+guide covers building/publishing the image and running it by hand.
+
+The R functions default to the image `joelnitta/rhybphaser:latest`; override
+with their `docker_image` argument.
 
 ## Prerequisites
 
@@ -18,7 +24,7 @@ All dependencies are installed via conda/bioconda:
 - BCFtools (≥1.9)
 - BBMap (≥38.87) including BBSplit
 - HybPiper (≥2.0)
-- HybPhaser scripts
+- the bundled `rhybphaser` bash scripts
 
 The specific versions installed are defined in `environment.yml`.
 
@@ -28,12 +34,12 @@ The specific versions installed are defined in `environment.yml`.
 
 1. **Build the image:**
    ```bash
-   docker-compose build
+   docker compose build
    ```
 
 2. **Run the container:**
    ```bash
-   docker-compose run --rm hybphaser
+   docker compose run --rm rhybphaser
    ```
 
 3. **Access your data:**
@@ -44,7 +50,7 @@ The specific versions installed are defined in `environment.yml`.
 
 1. **Build the image:**
    ```bash
-   docker build -t hybphaser:latest .
+   docker build -t joelnitta/rhybphaser:latest .
    ```
 
 2. **Run the container:**
@@ -52,14 +58,14 @@ The specific versions installed are defined in `environment.yml`.
    docker run -it --rm \
      -v $(pwd)/data:/data/input \
      -v $(pwd)/output:/data/output \
-     hybphaser:latest
+     joelnitta/rhybphaser:latest
    ```
 
 ## Usage Examples
 
-### Running HybPhaser Scripts
+### Running the Bundled Scripts
 
-Once inside the container, you can run HybPhaser scripts:
+The container's entry points are the two bash scripts on `PATH`:
 
 ```bash
 # Generate consensus sequences
@@ -67,28 +73,14 @@ Once inside the container, you can run HybPhaser scripts:
   -p /data/input/hybpiper_output \
   -o /data/output/hybphaser_output
 
-# Run R scripts
-cd /opt/hybphaser
-R --no-save < 1a_count_snps.R
+# Extract mapped reads
+2_extract_mapped_reads.sh -b /data/input/hybphaser_output \
+  -o /data/output/mapped_reads
 ```
 
-### Running with Custom Configuration
-
-1. **Copy and edit the config file:**
-   ```bash
-   cp /opt/hybphaser/config.txt /data/input/config.txt
-   # Edit config.txt with your settings
-   ```
-
-2. **Run the main script:**
-   ```bash
-   docker run -it --rm \
-     -v $(pwd)/data:/data/input \
-     -v $(pwd)/output:/data/output \
-     hybphaser:latest \
-     R -e "config_file='/data/input/config.txt'; \
-           source('/opt/hybphaser/HybPhaser_Main_script.R')"
-   ```
+From R, call `run_generate_consensus_sequences()` /
+`run_extract_mapped_reads()` instead — they mount the right directories and
+invoke these scripts for you.
 
 ### Interactive Session
 
@@ -98,13 +90,13 @@ For an interactive session where you can run multiple commands:
 docker run -it --rm \
   -v $(pwd)/data:/data/input \
   -v $(pwd)/output:/data/output \
-  hybphaser:latest /bin/bash
+  joelnitta/rhybphaser:latest /bin/bash
 ```
 
 ## Directory Structure
 
 Inside the container:
-- `/opt/hybphaser/` - HybPhaser scripts and configuration
+- `/opt/rhybphaser/` - bundled bash scripts and configuration
 - `/data/input/` - Mounted input data directory
 - `/data/output/` - Mounted output directory
 - `/opt/conda/` - Conda environment with all dependencies
@@ -122,7 +114,7 @@ If you encounter memory issues with Java (BBMap/BBSplit), you can:
 
 2. **Set memory when running Docker directly:**
    ```bash
-   docker run --memory=8g -it hybphaser:latest
+   docker run --memory=8g -it joelnitta/rhybphaser:latest
    ```
 
 3. **Adjust Java memory in config.txt:**
@@ -136,7 +128,7 @@ If you encounter memory issues with Java (BBMap/BBSplit), you can:
 Control the number of CPUs used:
 
 ```bash
-docker run --cpus=4 -it hybphaser:latest
+docker run --cpus=4 -it joelnitta/rhybphaser:latest
 ```
 
 Or in docker-compose.yml:
@@ -155,8 +147,8 @@ mkdir -p output
 # 3. Create namelist.txt in data/namelist/
 
 # 4. Build and run
-docker-compose build
-docker-compose run --rm hybphaser
+docker compose build
+docker compose run --rm rhybphaser
 
 # Inside container:
 # 5. Generate consensus sequences
@@ -164,12 +156,11 @@ docker-compose run --rm hybphaser
   -n /data/input/namelist/namelist.txt \
   -p /data/input/hybpiper_output \
   -o /data/output/hybphaser_output
-
-# 6. Configure and run R scripts
-cd /opt/hybphaser
-# Edit config.txt as needed, then:
-R --no-save < HybPhaser_Main_script.R
 ```
+
+Then run the downstream analysis from R on the host with the `rhybphaser`
+package (`count_snps()`, `assess_dataset()`, ...), pointing at
+`./output/hybphaser_output`.
 
 ## Troubleshooting
 
@@ -182,7 +173,7 @@ If you encounter permission issues with output files:
 docker run -it --rm --user $(id -u):$(id -g) \
   -v $(pwd)/data:/data/input \
   -v $(pwd)/output:/data/output \
-  hybphaser:latest
+  joelnitta/rhybphaser:latest
 ```
 
 ### Out of Memory Errors
@@ -210,12 +201,20 @@ To add or update dependencies:
 1. Edit `environment.yml`
 2. Rebuild the Docker image:
    ```bash
-   docker-compose build --no-cache
+   docker compose build --no-cache
    ```
+
+## Publishing
+
+The image is built and pushed to Docker Hub by
+`.github/workflows/docker.yml` on pushes to `main` that touch the
+`Dockerfile`, `environment.yml`, or the bundled scripts (requires the
+`DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` repository secrets).
 
 ## Additional Resources
 
-- [HybPhaser GitHub](https://github.com/larsnauheimer/HybPhaser)
+- [rhybphaser GitHub](https://github.com/joelnitta/rhybphaser)
+- [Original HybPhaser method and code](https://github.com/LarsNauheimer/HybPhaser)
 - [HybPhaser Manuscript](https://www.biorxiv.org/content/10.1101/\
 2020.10.27.354589v2)
 - [HybPiper Documentation](https://github.com/mossmatters/HybPiper/wiki)
@@ -223,6 +222,6 @@ To add or update dependencies:
 ## Support
 
 For issues related to:
-- Docker image: Open an issue in this repository
-- HybPhaser functionality: Refer to the main HybPhaser repository
+- Docker image or `rhybphaser`: Open an issue in this repository
+- The HybPhaser method itself: See the original HybPhaser repository
 - Dependencies: Check respective software documentation

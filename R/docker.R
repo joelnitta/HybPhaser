@@ -42,12 +42,12 @@ check_docker <- function(quiet = FALSE) {
 }
 
 
-#' Check if HybPhaser Docker Image Exists
+#' Check if the rhybphaser Docker Image Exists
 #'
-#' Verifies that the HybPhaser Docker image is available locally
+#' Verifies that the rhybphaser Docker image is available locally
 #'
 #' @param image Name of the Docker image. Default is
-#'   "joelnitta/hybphaser:latest"
+#'   "joelnitta/rhybphaser:latest"
 #' @param pull Logical; if TRUE and image is not found, attempt to pull it
 #'
 #' @return Logical; TRUE if image exists,  FALSE otherwise
@@ -55,10 +55,10 @@ check_docker <- function(quiet = FALSE) {
 #'
 #' @examples
 #' \dontrun{
-#' check_docker_image("joelnitta/hybphaser:latest")
+#' check_docker_image("joelnitta/rhybphaser:latest")
 #' }
 check_docker_image <- function(
-  image = "joelnitta/hybphaser:latest",
+  image = "joelnitta/rhybphaser:latest",
   pull = FALSE
 ) {
   if (!check_docker(quiet = TRUE)) {
@@ -153,9 +153,9 @@ check_docker_image <- function(
 }
 
 
-#' Run Docker Container with HybPhaser
+#' Run a Command in the rhybphaser Docker Container
 #'
-#' Internal function to execute commands in HybPhaser Docker container
+#' Internal function to execute commands in the rhybphaser Docker container
 #'
 #' @param cmd Character vector; command to run
 #' @param volumes Named character vector; host paths to mount (names are
@@ -168,7 +168,7 @@ check_docker_image <- function(
 .run_docker <- function(
   cmd,
   volumes = NULL,
-  image = "joelnitta/hybphaser:latest",
+  image = "joelnitta/rhybphaser:latest",
   ...
 ) {
   # Build volume mount arguments

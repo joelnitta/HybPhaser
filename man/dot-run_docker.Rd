@@ -2,9 +2,9 @@
 % Please edit documentation in R/docker.R
 \name{.run_docker}
 \alias{.run_docker}
-\title{Run Docker Container with HybPhaser}
+\title{Run a Command in the rhybphaser Docker Container}
 \usage{
-.run_docker(cmd, volumes = NULL, image = "joelnitta/hybphaser:latest", ...)
+.run_docker(cmd, volumes = NULL, image = "joelnitta/rhybphaser:latest", ...)
 }
 \arguments{
 \item{cmd}{Character vector; command to run}
@@ -20,6 +20,6 @@ container paths)}
 Exit code from Docker command
 }
 \description{
-Internal function to execute commands in HybPhaser Docker container
+Internal function to execute commands in the rhybphaser Docker container
 }
 \keyword{internal}

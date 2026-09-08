@@ -2,13 +2,13 @@
 % Please edit documentation in R/docker.R
 \name{check_docker_image}
 \alias{check_docker_image}
-\title{Check if HybPhaser Docker Image Exists}
+\title{Check if the rhybphaser Docker Image Exists}
 \usage{
-check_docker_image(image = "joelnitta/hybphaser:latest", pull = FALSE)
+check_docker_image(image = "joelnitta/rhybphaser:latest", pull = FALSE)
 }
 \arguments{
 \item{image}{Name of the Docker image. Default is
-"joelnitta/hybphaser:latest"}
+"joelnitta/rhybphaser:latest"}
 
 \item{pull}{Logical; if TRUE and image is not found, attempt to pull it}
 }
@@ -16,10 +16,10 @@ check_docker_image(image = "joelnitta/hybphaser:latest", pull = FALSE)
 Logical; TRUE if image exists,  FALSE otherwise
 }
 \description{
-Verifies that the HybPhaser Docker image is available locally
+Verifies that the rhybphaser Docker image is available locally
 }
 \examples{
 \dontrun{
-check_docker_image("joelnitta/hybphaser:latest")
+check_docker_image("joelnitta/rhybphaser:latest")
 }
 }

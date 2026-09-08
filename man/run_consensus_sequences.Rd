@@ -47,7 +47,7 @@ calling heterozygous sites. Default is 0.15.}
 allele. Default is 4.}
 
 \item{docker_image}{Docker image name. Default is
-"joelnitta/hybphaser:latest"}
+"joelnitta/rhybphaser:latest"}
 
 \item{pull_image}{Logical; if TRUE, pull Docker image if not found}
 }
