@@ -58,6 +58,16 @@ run_generate_consensus_sequences <- function(
   docker_image = "joelnitta/hybphaser:latest",
   pull_image = FALSE
 ) {
+  # Validate inputs before touching Docker so path mistakes are reported
+  # without requiring Docker to be installed or the image to be present.
+  if (!dir.exists(hybpiper_dir)) {
+    stop("HybPiper directory not found: ", hybpiper_dir)
+  }
+
+  if (!is.null(namelist) && !file.exists(namelist)) {
+    stop("Namelist file not found: ", namelist)
+  }
+
   # Validate Docker
   if (!check_docker(quiet = TRUE)) {
     stop("Docker is not available. Please install and start Docker.")
@@ -70,16 +80,6 @@ run_generate_consensus_sequences <- function(
       "' not found. ",
       "Set pull_image = TRUE to download it."
     )
-  }
-
-  # Validate input directories exist
-  if (!dir.exists(hybpiper_dir)) {
-    stop("HybPiper directory not found: ", hybpiper_dir)
-  }
-
-  # Validate namelist if provided
-  if (!is.null(namelist) && !file.exists(namelist)) {
-    stop("Namelist file not found: ", namelist)
   }
 
   # Get absolute paths
@@ -214,6 +214,16 @@ run_extract_mapped_reads <- function(
   docker_image = "joelnitta/hybphaser:latest",
   pull_image = FALSE
 ) {
+  # Validate inputs before touching Docker so path mistakes are reported
+  # without requiring Docker to be installed or the image to be present.
+  if (!dir.exists(base_dir)) {
+    stop("Base directory not found: ", base_dir)
+  }
+
+  if (!is.null(namelist) && !file.exists(namelist)) {
+    stop("Namelist file not found: ", namelist)
+  }
+
   # Validate Docker
   if (!check_docker(quiet = TRUE)) {
     stop("Docker is not available. Please install and start Docker.")
@@ -228,20 +238,10 @@ run_extract_mapped_reads <- function(
     )
   }
 
-  # Validate input directory exists
-  if (!dir.exists(base_dir)) {
-    stop("Base directory not found: ", base_dir)
-  }
-
   # Create output directory if needed
   if (!dir.exists(output_dir)) {
     dir.create(output_dir, recursive = TRUE)
     message("Created output directory: ", output_dir)
-  }
-
-  # Validate namelist if provided
-  if (!is.null(namelist) && !file.exists(namelist)) {
-    stop("Namelist file not found: ", namelist)
   }
 
   # Get absolute paths

@@ -90,7 +90,7 @@ check_docker_image <- function(
     }
   }
 
-  warning(
+  message(
     "Docker image '",
     image,
     "' not found. ",
