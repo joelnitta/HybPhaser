@@ -15,7 +15,7 @@ run_consensus_sequences(
   min_depth = 10,
   min_allele_freq = 0.15,
   min_allele_count = 4,
-  docker_image = "joelnitta/hybphaser:latest",
+  docker_image = "joelnitta/rhybphaser:latest",
   pull_image = FALSE
 )
 }

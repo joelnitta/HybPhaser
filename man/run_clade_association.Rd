@@ -17,7 +17,7 @@ run_clade_association(
   no_of_threads = 1,
   java_memory_usage_clade_association = "",
   docker_fallback = TRUE,
-  docker_image = "joelnitta/hybphaser:latest",
+  docker_image = "joelnitta/rhybphaser:latest",
   pull_image = FALSE
 )
 }
@@ -56,7 +56,7 @@ BBSplit (e.g., \code{"2G"}, \code{"512m"}).}
 available, execute BBSplit commands via Docker. Default \code{TRUE}.}
 
 \item{docker_image}{Docker image used for fallback execution. Default is
-\code{"joelnitta/hybphaser:latest"}.}
+\code{"joelnitta/rhybphaser:latest"}.}
 
 \item{pull_image}{Logical; if \code{TRUE}, pull Docker image when not available.}
 }

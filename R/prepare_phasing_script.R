@@ -43,7 +43,7 @@ run_phasing <- function(
   no_of_threads_phasing = 1,
   java_memory_usage_phasing = "",
   docker_fallback = TRUE,
-  docker_image = "joelnitta/hybphaser:latest",
+  docker_image = "joelnitta/rhybphaser:latest",
   pull_image = FALSE
 ) {
   validate_paths(

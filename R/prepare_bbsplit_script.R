@@ -25,7 +25,7 @@
 #' @param docker_fallback Logical; if `TRUE` and local `bbsplit.sh` is not
 #'   available, execute BBSplit commands via Docker. Default `TRUE`.
 #' @param docker_image Docker image used for fallback execution. Default is
-#'   `"joelnitta/hybphaser:latest"`.
+#'   `"joelnitta/rhybphaser:latest"`.
 #' @param pull_image Logical; if `TRUE`, pull Docker image when not available.
 #'
 #' @return Invisibly returns a list with script path, generated commands,
@@ -55,7 +55,7 @@ run_clade_association <- function(
   no_of_threads = 1,
   java_memory_usage_clade_association = "",
   docker_fallback = TRUE,
-  docker_image = "joelnitta/hybphaser:latest",
+  docker_image = "joelnitta/rhybphaser:latest",
   pull_image = FALSE
 ) {
   validate_paths(
