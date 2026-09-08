@@ -23,8 +23,9 @@
 #' @param java_memory_usage_clade_association Optional Java memory text for
 #'   BBSplit (e.g., `"2G"`, `"512m"`).
 #' @param engine One of `"docker"` (default) or `"local"`. With `"docker"`,
-#'   BBSplit runs in the `rhybphaser` container. With `"local"`, it runs
-#'   `bbsplit.sh` from `PATH` (or `path_to_bbmap`).
+#'   BBSplit runs in the `rhybphaser` container. With `"local"`, the generated
+#'   script runs `bbsplit.sh` from `PATH` (or `path_to_bbmap`); this needs a
+#'   POSIX shell and is not available on native Windows.
 #' @param docker_image Docker image used when `engine = "docker"`. Default is
 #'   `"joelnitta/rhybphaser:latest"`.
 #' @param pull_image Logical; if `TRUE`, pull the Docker image when not

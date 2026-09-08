@@ -9,7 +9,9 @@
 #' @param hybpiper_dir Path to HybPiper output directory (on host machine)
 #' @param output_dir Path to output directory for HybPhaser results (on host
 #'   machine). Will be created if it doesn't exist.
-#' @param engine One of `"docker"` (default) or `"local"`.
+#' @param engine One of `"docker"` (default) or `"local"`. `"local"` runs
+#'   the bundled bash script directly and needs a POSIX shell (not available
+#'   on native Windows).
 #' @param namelist Path to file containing sample names, one per line. If
 #'   NULL, processes all samples in hybpiper_dir.
 #' @param sample Single sample name to process. Ignored if namelist is
@@ -229,7 +231,9 @@ run_generate_consensus_sequences <- function(
 #'   NULL, processes all samples found.
 #' @param remove_duplicates Logical; if TRUE, remove duplicate sequences
 #'   (not just duplicate names)
-#' @param engine One of `"docker"` (default) or `"local"`.
+#' @param engine One of `"docker"` (default) or `"local"`. `"local"` runs
+#'   the bundled bash script directly and needs a POSIX shell (not available
+#'   on native Windows).
 #' @param docker_image Docker image name. Default is
 #'   "joelnitta/rhybphaser:latest"
 #' @param pull_image Logical; if TRUE, pull Docker image if not found

@@ -47,7 +47,9 @@ calling heterozygous sites. Default is 0.15.}
 \item{min_allele_count}{Integer; minimum number of reads supporting an
 allele. Default is 4.}
 
-\item{engine}{One of \code{"docker"} (default) or \code{"local"}.}
+\item{engine}{One of \code{"docker"} (default) or \code{"local"}. \code{"local"} runs
+the bundled bash script directly and needs a POSIX shell (not available
+on native Windows).}
 
 \item{docker_image}{Docker image name. Default is
 "joelnitta/rhybphaser:latest"}

@@ -32,6 +32,7 @@ test_that("run_phasing validates paired-end IDs", {
 
 
 test_that("run_phasing builds and runs single-end commands", {
+  skip_on_os("windows") # bundled scripts are bash
   tmp <- tempfile()
   dir.create(tmp)
 
@@ -89,6 +90,7 @@ test_that("run_phasing builds and runs single-end commands", {
 
 
 test_that("run_phasing builds paired-end commands", {
+  skip_on_os("windows") # bundled scripts are bash
   tmp <- tempfile()
   dir.create(tmp)
 
@@ -138,6 +140,7 @@ test_that("run_phasing builds paired-end commands", {
 
 
 test_that("run_phasing can execute generated script", {
+  skip_on_os("windows") # bundled scripts are bash
   tmp <- tempfile()
   dir.create(tmp)
 
@@ -220,6 +223,7 @@ test_that("run_phasing with engine = docker requires Docker", {
 
 
 test_that("run_phasing_from_config reads config values", {
+  skip_on_os("windows") # bundled scripts are bash
   tmp <- tempfile()
   dir.create(tmp)
 

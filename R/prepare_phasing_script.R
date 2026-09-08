@@ -22,8 +22,9 @@
 #'   `"auto"` to omit thread argument.
 #' @param java_memory_usage_phasing Optional Java memory (e.g., `"2G"`).
 #' @param engine One of `"docker"` (default) or `"local"`. With `"docker"`,
-#'   BBSplit runs in the `rhybphaser` container. With `"local"`, it runs
-#'   `bbsplit.sh` from `PATH` (or `path_to_bbmap_executables`).
+#'   BBSplit runs in the `rhybphaser` container. With `"local"`, the generated
+#'   script runs `bbsplit.sh` from `PATH` (or `path_to_bbmap_executables`);
+#'   this needs a POSIX shell and is not available on native Windows.
 #' @param docker_image Docker image used when `engine = "docker"`.
 #' @param pull_image Logical; if `TRUE`, pull the Docker image when missing.
 #'

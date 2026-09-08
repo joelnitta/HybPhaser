@@ -53,8 +53,9 @@ to omit thread argument.}
 BBSplit (e.g., \code{"2G"}, \code{"512m"}).}
 
 \item{engine}{One of \code{"docker"} (default) or \code{"local"}. With \code{"docker"},
-BBSplit runs in the \code{rhybphaser} container. With \code{"local"}, it runs
-\code{bbsplit.sh} from \code{PATH} (or \code{path_to_bbmap}).}
+BBSplit runs in the \code{rhybphaser} container. With \code{"local"}, the generated
+script runs \code{bbsplit.sh} from \code{PATH} (or \code{path_to_bbmap}); this needs a
+POSIX shell and is not available on native Windows.}
 
 \item{docker_image}{Docker image used when \code{engine = "docker"}. Default is
 \code{"joelnitta/rhybphaser:latest"}.}

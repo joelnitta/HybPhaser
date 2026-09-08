@@ -26,7 +26,9 @@ NULL, processes all samples found.}
 \item{remove_duplicates}{Logical; if TRUE, remove duplicate sequences
 (not just duplicate names)}
 
-\item{engine}{One of \code{"docker"} (default) or \code{"local"}.}
+\item{engine}{One of \code{"docker"} (default) or \code{"local"}. \code{"local"} runs
+the bundled bash script directly and needs a POSIX shell (not available
+on native Windows).}
 
 \item{docker_image}{Docker image name. Default is
 "joelnitta/rhybphaser:latest"}

@@ -37,6 +37,7 @@ test_that("run_clade_association validates inputs", {
 
 
 test_that("run_clade_association creates and runs single-end commands", {
+  skip_on_os("windows") # bundled scripts are bash
   tmp <- tempfile()
   dir.create(tmp)
 
@@ -93,6 +94,7 @@ test_that("run_clade_association creates and runs single-end commands", {
 
 
 test_that("run_clade_association filters paired-end reads by namelist", {
+  skip_on_os("windows") # bundled scripts are bash
   tmp <- tempfile()
   dir.create(tmp)
 
@@ -148,6 +150,7 @@ test_that("run_clade_association filters paired-end reads by namelist", {
 
 
 test_that("run_clade_association can execute generated script", {
+  skip_on_os("windows") # bundled scripts are bash
   tmp <- tempfile()
   dir.create(tmp)
 
@@ -266,6 +269,7 @@ test_that("run_clade_association with engine = docker requires Docker", {
 
 
 test_that("run_clade_association_from_config reads config values", {
+  skip_on_os("windows") # bundled scripts are bash
   tmp <- tempfile()
   dir.create(tmp)
 
