@@ -6,7 +6,7 @@
 \alias{rhybphaser-package}
 \title{rhybphaser: Phasing of Sequence Reads for Polyploid Hybrids from Target Capture Data}
 \description{
-An R implementation of the HybPhaser method by Nauheimer et al. (original code at \url{https://github.com/LarsNauheimer/HybPhaser}). HybPhaser detects hybrids by measuring heterozygosity in target capture datasets and phases hybrid accessions by separating reads according to similarity with selected taxa that represent parental clades. It is designed as an extension to the HybPiper assembly pipeline.
+An R implementation of the HybPhaser method by Nauheimer et al. (2021) \doi{10.1002/aps3.11441} (original code at \url{https://github.com/LarsNauheimer/HybPhaser}). HybPhaser detects hybrids by measuring heterozygosity in target capture datasets and phases hybrid accessions by separating reads according to similarity with selected taxa that represent parental clades. It is designed as an extension to the HybPiper assembly pipeline.
 }
 \seealso{
 Useful links:
