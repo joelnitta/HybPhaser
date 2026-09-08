@@ -95,10 +95,14 @@ jobs:
         shell: bash -el {0}
         run: |
           mkdir -p rendered
-          Rscript -e 'rmarkdown::render(
-            sprintf("vignettes/%s.Rmd", Sys.getenv("VIG")),
-            output_dir = "rendered"
-          )'
+          # Render the source (.Rmd.orig when it exists) so the live
+          # pipeline is exercised, not the pre-rendered copy.
+          Rscript -e '
+            v <- Sys.getenv("VIG")
+            src <- sprintf("vignettes/%s.Rmd.orig", v)
+            if (!file.exists(src)) src <- sprintf("vignettes/%s.Rmd", v)
+            rmarkdown::render(src, output_dir = "rendered")
+          '
 
       - uses: actions/upload-artifact@v4
         if: always()

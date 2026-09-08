@@ -6,6 +6,9 @@
 ^_pkgdown\.yml$
 ^docs$
 ^pkgdown$
+^data-raw$
+^vignettes/rhybphaser_targets\.Rmd\.orig$
+^vignettes/.*\.orig$
 ^\.dockerignore$
 ^\.prompts$
 ^\.quarto$

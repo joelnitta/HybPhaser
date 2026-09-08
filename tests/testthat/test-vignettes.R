@@ -4,13 +4,16 @@
 # the `vignettes.yaml` workflow.
 
 vignette_source <- function(name) {
-  installed <- system.file("doc", name, package = "rhybphaser")
-  if (nzchar(installed) && file.exists(installed)) {
-    return(installed)
-  }
-  in_tree <- testthat::test_path("..", "..", "vignettes", name)
-  if (file.exists(in_tree)) {
-    return(in_tree)
+  # Prefer the source .Rmd.orig (live code) over a pre-rendered .Rmd.
+  candidates <- c(
+    testthat::test_path("..", "..", "vignettes", paste0(name, ".orig")),
+    testthat::test_path("..", "..", "vignettes", name),
+    system.file("doc", name, package = "rhybphaser")
+  )
+  for (p in candidates) {
+    if (nzchar(p) && file.exists(p)) {
+      return(p)
+    }
   }
   NA_character_
 }
