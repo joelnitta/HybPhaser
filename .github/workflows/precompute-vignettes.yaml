@@ -44,7 +44,7 @@ jobs:
 
       - name: Create hybpiper_env
         shell: bash -el {0}
-        run: mamba create -n hybpiper_env -c bioconda -c conda-forge -y hybpiper parallel perl
+        run: mamba create -n hybpiper_env -c bioconda -c conda-forge -y "python<3.13" hybpiper parallel perl
 
       - name: Pull rhybphaser Docker image
         run: docker pull joelnitta/rhybphaser:latest
