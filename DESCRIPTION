@@ -31,8 +31,10 @@ Suggests:
     rmarkdown
 Config/testthat/edition: 3
 VignetteBuilder: knitr
-URL: https://github.com/joelnitta/rhybphaser
+URL: https://github.com/joelnitta/rhybphaser,
+    https://joelnitta.github.io/rhybphaser/
 BugReports: https://github.com/joelnitta/rhybphaser/issues
+Config/Needs/website: pkgdown
 Depends: 
     R (>= 4.0)
 Config/roxygen2/version: 8.0.0

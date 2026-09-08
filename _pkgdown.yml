@@ -1,0 +1,75 @@
+url: https://joelnitta.github.io/rhybphaser/
+
+template:
+  bootstrap: 5
+
+reference:
+- title: Analysis workflow
+  desc: >
+    The main steps, in the order they are run. See
+    `vignette("rhybphaser")` for a worked example.
+  contents:
+  - run_generate_consensus_sequences
+  - count_snps
+  - assess_dataset
+  - generate_sequence_lists
+  - generate_sequence_lists_after_assessment
+  - get_reference_samples
+  - extract_mapped_reads
+  - run_clade_association
+  - collate_bbsplit_results
+  - run_phasing
+  - collate_phasing_stats
+  - run_phased_hybpiper
+  - make_phased_namelist
+  - merge_sequence_lists
+
+- title: Config-file entry points
+  desc: >
+    `config.txt`-driven wrappers for compatibility with the original
+    HybPhaser script workflow.
+  contents:
+  - read_config
+  - run_clade_association_from_config
+  - collate_bbsplit_results_from_config
+  - run_phasing_from_config
+  - collate_phasing_stats_from_config
+  - merge_sequence_lists_from_config
+
+- title: Running HybPiper
+  desc: Run HybPiper assembly and stats through a conda environment.
+  contents:
+  - hybpiper_assemble
+  - hybpiper_stats
+  - run_hybpiper_test_dataset
+  - run_hybpiper_test_dataset_clean
+  - run_conda
+
+- title: Environment checks
+  contents:
+  - check_conda
+  - check_hybpiper_conda
+  - check_docker
+  - check_docker_image
+
+- title: Input-file helpers
+  contents:
+  - write_clade_reference_csv
+  - write_phasing_prep_csv
+
+- title: Bundled scripts and example data
+  contents:
+  - hybphaser_scripts
+  - hybphaser_example
+  - run_hybphaser_script
+  - run_consensus_sequences
+  - run_extract_mapped_reads
+
+- title: Test-data generators
+  contents:
+  - create_test_dataset
+  - create_real_test_dataset
+  - create_test_hybpiper_output
+  - create_hybpiper_test_output
+  - create_test_namelist
+  - create_test_targets

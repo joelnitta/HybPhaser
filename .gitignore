@@ -8,3 +8,6 @@ targets_test_data
 
 # large local test data, not tracked
 fern_targets.fasta
+
+# pkgdown site is built and deployed by CI, not committed
+docs/

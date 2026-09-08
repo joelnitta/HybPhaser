@@ -3,6 +3,9 @@
 ^\.git$
 ^\.github$
 ^\.gitignore$
+^_pkgdown\.yml$
+^docs$
+^pkgdown$
 ^\.dockerignore$
 ^\.prompts$
 ^\.quarto$
