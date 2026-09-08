@@ -5,7 +5,10 @@
 - Renamed the package from **HybPhaser** to **rhybphaser** to avoid
   confusion with the original script collection at
   <https://github.com/LarsNauheimer/HybPhaser>. This is an R-package
-  reimplementation of the HybPhaser method by Nauheimer et al.
+  reimplementation of the HybPhaser method by Nauheimer et al. (2021,
+  <doi:10.1002/aps3.11441>).
+- Added an `inst/CITATION` file: `citation("rhybphaser")` now points to
+  the published HybPhaser paper and this package.
 - Unified how external tools are executed.
   [`run_generate_consensus_sequences()`](https://joelnitta.github.io/rhybphaser/reference/run_generate_consensus_sequences.md),
   [`run_extract_mapped_reads()`](https://joelnitta.github.io/rhybphaser/reference/run_extract_mapped_reads.md),
