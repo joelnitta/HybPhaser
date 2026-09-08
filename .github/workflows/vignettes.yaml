@@ -86,7 +86,11 @@ jobs:
 
       - name: Create hybpiper_env
         shell: bash -el {0}
-        run: mamba create -n hybpiper_env -c bioconda -c conda-forge -y "python<3.13" hybpiper parallel perl
+        # HybPiper 2.3.4 does not work with SPAdes 4.x (it leaves no
+        # <gene>_spades directory, so rerun_spades() crashes). Pin < 4.
+        run: >-
+          mamba create -n hybpiper_env -c bioconda -c conda-forge -y
+          "python<3.13" "spades<4" hybpiper parallel perl
 
       - name: Pull rhybphaser Docker image
         run: docker pull joelnitta/rhybphaser:latest
@@ -96,12 +100,15 @@ jobs:
         run: |
           mkdir -p rendered
           # Render the source (.Rmd.orig when it exists) so the live
-          # pipeline is exercised, not the pre-rendered copy.
+          # pipeline is exercised, not the pre-rendered copy. rmarkdown
+          # only knits a .Rmd, so copy the source to one first.
           Rscript -e '
             v <- Sys.getenv("VIG")
             src <- sprintf("vignettes/%s.Rmd.orig", v)
             if (!file.exists(src)) src <- sprintf("vignettes/%s.Rmd", v)
-            rmarkdown::render(src, output_dir = "rendered")
+            rmd <- file.path("rendered", paste0(v, ".Rmd"))
+            file.copy(src, rmd, overwrite = TRUE)
+            rmarkdown::render(rmd, output_dir = "rendered")
           '
 
       - uses: actions/upload-artifact@v4
