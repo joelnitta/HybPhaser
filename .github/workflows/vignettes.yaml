@@ -86,15 +86,28 @@ jobs:
 
       - name: Create hybpiper_env
         shell: bash -el {0}
-        # conda-forge must have channel priority over bioconda (the
-        # bioconda-recommended order); otherwise GNU `parallel` resolves to a
-        # mis-packaged build with a relative Perl @INC and every SPAdes job
-        # fails ("Can't locate IPC/Open3.pm"), which then crashes HybPiper's
-        # rerun_spades() on the missing <gene>_spades directory.
-        # HybPiper 2.3.4 also does not work with SPAdes 4.x; pin < 4.
-        run: >-
-          mamba create -n hybpiper_env -c conda-forge -c bioconda -y
-          "python<3.13" "spades<4" hybpiper parallel perl
+        # conda-forge before bioconda is the bioconda-recommended channel order.
+        # HybPiper 2.3.4 does not work with SPAdes 4.x; pin < 4.
+        #
+        # PERL5LIB: conda-forge's relocatable perl derives its lib prefix from
+        # $^X. GNU `parallel` is `#!/usr/bin/env perl`, so perl is exec'd as the
+        # bare name "perl" and the prefix resolves to "..", giving a *relative*
+        # @INC ("../lib/perl5/..."). When HybPiper runs `parallel` from a gene
+        # working directory those paths miss the env, so every SPAdes job dies
+        # with "Can't locate IPC/Open3.pm" and rerun_spades() then crashes on
+        # the missing <gene>_spades dir. Invoking the env's perl by absolute
+        # path yields a correct absolute @INC; pin that into PERL5LIB for all
+        # later steps so `parallel` finds its core modules.
+        run: |
+          mamba create -n hybpiper_env -c conda-forge -c bioconda -y \
+            "python<3.13" "spades<4" hybpiper parallel perl
+          envp="$CONDA/envs/hybpiper_env"
+          # Point `parallel`'s shebang at the env's perl by absolute path so
+          # $^X is absolute and @INC resolves correctly...
+          sed -i "1s|^#!.*|#!$envp/bin/perl|" "$envp/bin/parallel"
+          # ...and, as a backstop, pin the absolute perl lib dirs into PERL5LIB
+          # for every later step.
+          echo "PERL5LIB=$("$envp/bin/perl" -e 'print join ":", grep { /hybpiper_env/ } @INC')" >> "$GITHUB_ENV"
 
       - name: Pull rhybphaser Docker image
         run: docker pull joelnitta/rhybphaser:latest

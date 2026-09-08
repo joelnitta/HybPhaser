@@ -44,12 +44,16 @@ jobs:
 
       - name: Create hybpiper_env
         shell: bash -el {0}
-        # conda-forge must have channel priority over bioconda, else GNU
-        # `parallel` resolves to a broken build (relative Perl @INC) and every
-        # SPAdes job fails. HybPiper 2.3.4 also needs SPAdes < 4.
-        run: >-
-          mamba create -n hybpiper_env -c conda-forge -c bioconda -y
-          "python<3.13" "spades<4" hybpiper parallel perl
+        # conda-forge before bioconda is the bioconda-recommended channel order.
+        # HybPiper 2.3.4 needs SPAdes < 4. PERL5LIB works around conda-forge
+        # perl's relative @INC breaking GNU `parallel` inside HybPiper (see
+        # vignettes.yaml for the full explanation).
+        run: |
+          mamba create -n hybpiper_env -c conda-forge -c bioconda -y \
+            "python<3.13" "spades<4" hybpiper parallel perl
+          envp="$CONDA/envs/hybpiper_env"
+          sed -i "1s|^#!.*|#!$envp/bin/perl|" "$envp/bin/parallel"
+          echo "PERL5LIB=$("$envp/bin/perl" -e 'print join ":", grep { /hybpiper_env/ } @INC')" >> "$GITHUB_ENV"
 
       - name: Pull rhybphaser Docker image
         run: docker pull joelnitta/rhybphaser:latest
