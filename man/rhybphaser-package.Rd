@@ -12,6 +12,7 @@ An R implementation of the HybPhaser method by Nauheimer et al. (original code a
 Useful links:
 \itemize{
   \item \url{https://github.com/joelnitta/rhybphaser}
+  \item \url{https://joelnitta.github.io/rhybphaser/}
   \item Report bugs at \url{https://github.com/joelnitta/rhybphaser/issues}
 }
 

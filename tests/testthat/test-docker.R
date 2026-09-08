@@ -3,6 +3,15 @@ test_that("check_docker returns logical", {
   expect_type(result, "logical")
 })
 
+test_that(".docker_user returns uid:gid on Linux, NULL elsewhere", {
+  user <- rhybphaser:::.docker_user()
+  if (Sys.info()[["sysname"]] == "Linux") {
+    expect_match(user, "^[0-9]+:[0-9]+$")
+  } else {
+    expect_null(user)
+  }
+})
+
 test_that(".normalize_docker_path handles paths correctly", {
   # Test basic path expansion
   path <- rhybphaser:::.normalize_docker_path("~/test")

@@ -153,6 +153,35 @@ check_docker_image <- function(
 }
 
 
+#' Docker `--user` argument for the current host user
+#'
+#' On Linux the container process must run as the host user so that it can
+#' write to (and create sub-directories in) bind-mounted host directories.
+#' Docker Desktop on macOS and Windows remaps bind-mount permissions, so
+#' `--user` is neither needed nor always safe there.
+#'
+#' @return `"<uid>:<gid>"`, or `NULL` when it should not be set.
+#' @keywords internal
+.docker_user <- function() {
+  if (Sys.info()[["sysname"]] != "Linux") {
+    return(NULL)
+  }
+  ids <- tryCatch(
+    c(
+      system2("id", "-u", stdout = TRUE, stderr = FALSE),
+      system2("id", "-g", stdout = TRUE, stderr = FALSE)
+    ),
+    error = function(e) character(0)
+  )
+  ids <- ids[nzchar(ids)]
+  if (length(ids) == 2 && all(grepl("^[0-9]+$", ids))) {
+    paste(ids, collapse = ":")
+  } else {
+    NULL
+  }
+}
+
+
 #' Run a Command in the rhybphaser Docker Container
 #'
 #' Internal function to execute commands in the rhybphaser Docker container
@@ -185,10 +214,14 @@ check_docker_image <- function(
     }
   }
 
+  user <- .docker_user()
+  user_args <- if (is.null(user)) character(0) else c("--user", user)
+
   # Build docker run command
   docker_args <- c(
     "run",
     "--rm", # Remove container after exit
+    user_args,
     volume_args,
     image,
     cmd
