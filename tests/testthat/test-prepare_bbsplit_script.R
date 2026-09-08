@@ -73,7 +73,8 @@ test_that("run_clade_association creates and runs single-end commands", {
     path_to_read_files_cladeassociation = reads,
     read_type_cladeassociation = "single-end",
     no_of_threads = 2,
-    java_memory_usage_clade_association = "1G"
+    java_memory_usage_clade_association = "1G",
+    engine = "local"
   )
 
   expect_true(file.exists(result$script_path))
@@ -132,7 +133,8 @@ test_that("run_clade_association filters paired-end reads by namelist", {
     read_type_cladeassociation = "paired-end",
     ID_read_pair1 = "_R1.fastq",
     ID_read_pair2 = "_R2.fastq",
-    file_with_samples_included = include
+    file_with_samples_included = include,
+    engine = "local"
   )
 
   expect_equal(length(result$commands), 1)
@@ -177,7 +179,8 @@ test_that("run_clade_association can execute generated script", {
     path_to_reference_sequences = refs,
     path_to_read_files_cladeassociation = reads,
     read_type_cladeassociation = "single-end",
-    path_to_bbmap = bbmap
+    path_to_bbmap = bbmap,
+    engine = "local"
   )
 
   expect_equal(result$run_status, 0)
@@ -187,7 +190,7 @@ test_that("run_clade_association can execute generated script", {
 })
 
 
-test_that("run_clade_association reports missing bbsplit for run mode", {
+test_that("run_clade_association reports missing bbsplit for engine = local", {
   skip_if(Sys.which("bbsplit.sh") != "", "bbsplit.sh is available on PATH")
 
   tmp <- tempfile()
@@ -215,9 +218,47 @@ test_that("run_clade_association reports missing bbsplit for run mode", {
       path_to_reference_sequences = refs,
       path_to_read_files_cladeassociation = reads,
       read_type_cladeassociation = "single-end",
-      docker_fallback = FALSE
+      engine = "local"
     ),
-    "bbsplit.sh not found on PATH"
+    "bbsplit.sh was not found"
+  )
+
+  unlink(tmp, recursive = TRUE)
+})
+
+
+test_that("run_clade_association with engine = docker requires Docker", {
+  local_mocked_bindings(
+    check_docker = function(quiet = FALSE) FALSE,
+    .package = "rhybphaser"
+  )
+
+  tmp <- tempfile()
+  dir.create(tmp)
+  refs <- file.path(tmp, "refs")
+  reads <- file.path(tmp, "reads")
+  out <- file.path(tmp, "out")
+  dir.create(refs)
+  dir.create(reads)
+  writeLines(c(">ref1", "ATCG"), file.path(refs, "ref1_consensus.fasta"))
+  clade_refs <- file.path(tmp, "clade_refs.csv")
+  utils::write.csv(
+    data.frame(samples = "ref1", abb = "R1"),
+    clade_refs,
+    row.names = FALSE
+  )
+  writeLines(c("@r1", "AAAA"), file.path(reads, "sample1.fastq"))
+
+  expect_error(
+    run_clade_association(
+      path_to_clade_association_folder = out,
+      csv_file_with_clade_reference_names = clade_refs,
+      path_to_reference_sequences = refs,
+      path_to_read_files_cladeassociation = reads,
+      read_type_cladeassociation = "single-end",
+      engine = "docker"
+    ),
+    "Docker is not available"
   )
 
   unlink(tmp, recursive = TRUE)
@@ -267,7 +308,7 @@ test_that("run_clade_association_from_config reads config values", {
     cfg
   )
 
-  result <- run_clade_association_from_config(cfg)
+  result <- run_clade_association_from_config(cfg, engine = "local")
   expect_true(file.exists(result$script_path))
   expect_equal(length(result$commands), 1)
   expect_equal(result$run_status, 0)

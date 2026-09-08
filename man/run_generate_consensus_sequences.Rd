@@ -2,7 +2,7 @@
 % Please edit documentation in R/docker_workflows.R
 \name{run_generate_consensus_sequences}
 \alias{run_generate_consensus_sequences}
-\title{Generate Consensus Sequences via Docker}
+\title{Generate Consensus Sequences}
 \usage{
 run_generate_consensus_sequences(
   hybpiper_dir,
@@ -15,6 +15,7 @@ run_generate_consensus_sequences(
   min_depth = 10,
   min_allele_freq = 0.15,
   min_allele_count = 4,
+  engine = c("docker", "local"),
   docker_image = "joelnitta/rhybphaser:latest",
   pull_image = FALSE
 )
@@ -46,6 +47,8 @@ calling heterozygous sites. Default is 0.15.}
 \item{min_allele_count}{Integer; minimum number of reads supporting an
 allele. Default is 4.}
 
+\item{engine}{One of \code{"docker"} (default) or \code{"local"}.}
+
 \item{docker_image}{Docker image name. Default is
 "joelnitta/rhybphaser:latest"}
 
@@ -56,8 +59,10 @@ Exit code (0 for success, non-zero for failure)
 }
 \description{
 Generates consensus sequences from HybPiper output by remapping reads to
-contigs and calling variants. Runs a bundled bash script in the
-rhybphaser Docker container.
+contigs and calling variants, by running a bundled bash script. By default
+the script runs inside the \code{rhybphaser} Docker container; set
+\code{engine = "local"} to run it directly against tools on \code{PATH}
+(BWA, SAMtools, BCFtools, BBMap, GNU parallel).
 }
 \examples{
 \dontrun{

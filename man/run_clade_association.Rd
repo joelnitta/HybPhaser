@@ -16,7 +16,7 @@ run_clade_association(
   path_to_bbmap = "",
   no_of_threads = 1,
   java_memory_usage_clade_association = "",
-  docker_fallback = TRUE,
+  engine = c("docker", "local"),
   docker_image = "joelnitta/rhybphaser:latest",
   pull_image = FALSE
 )
@@ -52,13 +52,15 @@ to omit thread argument.}
 \item{java_memory_usage_clade_association}{Optional Java memory text for
 BBSplit (e.g., \code{"2G"}, \code{"512m"}).}
 
-\item{docker_fallback}{Logical; if \code{TRUE} and local \code{bbsplit.sh} is not
-available, execute BBSplit commands via Docker. Default \code{TRUE}.}
+\item{engine}{One of \code{"docker"} (default) or \code{"local"}. With \code{"docker"},
+BBSplit runs in the \code{rhybphaser} container. With \code{"local"}, it runs
+\code{bbsplit.sh} from \code{PATH} (or \code{path_to_bbmap}).}
 
-\item{docker_image}{Docker image used for fallback execution. Default is
+\item{docker_image}{Docker image used when \code{engine = "docker"}. Default is
 \code{"joelnitta/rhybphaser:latest"}.}
 
-\item{pull_image}{Logical; if \code{TRUE}, pull Docker image when not available.}
+\item{pull_image}{Logical; if \code{TRUE}, pull the Docker image when not
+available.}
 }
 \value{
 Invisibly returns a list with script path, generated commands,

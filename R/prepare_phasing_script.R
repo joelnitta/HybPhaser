@@ -21,10 +21,11 @@
 #' @param no_of_threads_phasing Number of threads for BBSplit. Use `0` or
 #'   `"auto"` to omit thread argument.
 #' @param java_memory_usage_phasing Optional Java memory (e.g., `"2G"`).
-#' @param docker_fallback Logical; if `TRUE` and local `bbsplit.sh` is not
-#'   available, execute phasing commands via Docker.
-#' @param docker_image Docker image used for fallback execution.
-#' @param pull_image Logical; if `TRUE`, pull Docker image when missing.
+#' @param engine One of `"docker"` (default) or `"local"`. With `"docker"`,
+#'   BBSplit runs in the `rhybphaser` container. With `"local"`, it runs
+#'   `bbsplit.sh` from `PATH` (or `path_to_bbmap_executables`).
+#' @param docker_image Docker image used when `engine = "docker"`.
+#' @param pull_image Logical; if `TRUE`, pull the Docker image when missing.
 #'
 #' @return Invisibly returns a list with script path, commands, output folders,
 #'   selected samples, and run status.
@@ -42,10 +43,12 @@ run_phasing <- function(
   path_to_bbmap_executables = "",
   no_of_threads_phasing = 1,
   java_memory_usage_phasing = "",
-  docker_fallback = TRUE,
+  engine = c("docker", "local"),
   docker_image = "joelnitta/rhybphaser:latest",
   pull_image = FALSE
 ) {
+  engine <- match.arg(engine)
+
   validate_paths(
     paths = list(
       "csv_file_with_phasing_prep_info" = csv_file_with_phasing_prep_info,
@@ -115,19 +118,18 @@ run_phasing <- function(
     pXmx <- paste0(" -Xmx", java_memory_usage_phasing)
   }
 
+  # Resolve a local bbsplit.sh: used to run the script when engine = "local",
+  # and baked into the generated script as a record of what was run.
   bbsplit_sh <- "bbsplit.sh"
   if (path_to_bbmap_executables != "") {
     bbsplit_sh <- file.path(path_to_bbmap_executables, "bbsplit.sh")
     if (!file.exists(bbsplit_sh)) {
       stop("Could not find bbsplit.sh at: ", bbsplit_sh)
     }
-  }
-
-  local_bbsplit <- ""
-  if (path_to_bbmap_executables == "") {
+  } else {
     local_bbsplit <- Sys.which("bbsplit.sh")
-    if (local_bbsplit != "") {
-      bbsplit_sh <- local_bbsplit
+    if (nzchar(local_bbsplit)) {
+      bbsplit_sh <- unname(local_bbsplit)
     }
   }
 
@@ -155,14 +157,18 @@ run_phasing <- function(
   writeLines(c("#!/bin/bash", phasing_commands), phasing_script_file)
   Sys.chmod(phasing_script_file, mode = "0755")
 
-  local_exec_available <- path_to_bbmap_executables != "" ||
-    local_bbsplit != ""
-
-  if (local_exec_available) {
+  if (engine == "local") {
+    if (identical(bbsplit_sh, "bbsplit.sh") || !file.exists(bbsplit_sh)) {
+      stop(
+        "engine = \"local\" but bbsplit.sh was not found. Install BBMap and ",
+        "put it on PATH, set path_to_bbmap_executables, or use ",
+        "engine = \"docker\"."
+      )
+    }
     run_status <- system2(phasing_script_file, stdout = "", stderr = "")
-  } else if (isTRUE(docker_fallback)) {
+  } else {
     if (!check_docker(quiet = TRUE)) {
-      stop("Docker is not available for phasing fallback execution")
+      stop("engine = \"docker\" but Docker is not available")
     }
     if (!check_docker_image(docker_image, pull = pull_image)) {
       stop(
@@ -180,11 +186,6 @@ run_phasing <- function(
       folder_for_phased_reads = folder_for_phased_reads,
       folder_for_phasing_stats = folder_for_phasing_stats,
       docker_image = docker_image
-    )
-  } else {
-    stop(
-      "bbsplit.sh not found on PATH. Install BBMap, provide ",
-      "path_to_bbmap_executables, or set docker_fallback = TRUE."
     )
   }
 
@@ -205,10 +206,18 @@ run_phasing <- function(
 #' `run_phasing()`.
 #'
 #' @param config_file Path to HybPhaser configuration file.
+#' @param engine One of `"docker"` (default) or `"local"`; passed to
+#'   [run_phasing()].
+#' @param pull_image Logical; if `TRUE`, pull the Docker image when missing.
 #'
 #' @return Invisibly returns the same object as `run_phasing()`.
 #' @export
-run_phasing_from_config <- function(config_file = "./config.txt") {
+run_phasing_from_config <- function(
+  config_file = "./config.txt",
+  engine = c("docker", "local"),
+  pull_image = FALSE
+) {
+  engine <- match.arg(engine)
   required <- c(
     "path_to_phasing_folder",
     "csv_file_with_phasing_prep_info",
@@ -238,7 +247,9 @@ run_phasing_from_config <- function(config_file = "./config.txt") {
     folder_for_phasing_stats = cfg$folder_for_phasing_stats,
     path_to_bbmap_executables = cfg$path_to_bbmap_executables,
     no_of_threads_phasing = cfg$no_of_threads_phasing,
-    java_memory_usage_phasing = cfg$java_memory_usage_phasing
+    java_memory_usage_phasing = cfg$java_memory_usage_phasing,
+    engine = engine,
+    pull_image = pull_image
   )
 }
 

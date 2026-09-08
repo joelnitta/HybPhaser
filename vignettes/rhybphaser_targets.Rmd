@@ -172,8 +172,7 @@ targets::tar_dir({
             csv_file_with_clade_reference_names = clade_ref_csv,
             path_to_reference_sequences = reference_dir,
             path_to_read_files_cladeassociation = mapped_reads$output_dir,
-            read_type_cladeassociation = "single-end",
-            docker_fallback = TRUE
+            read_type_cladeassociation = "single-end"
           )
         ),
         tar_target(
@@ -200,8 +199,7 @@ targets::tar_dir({
               hybphaser_output_dir,
               "03_sequence_lists",
               "samples_consensus"
-            ),
-            docker_fallback = TRUE
+            )
           )
         ),
         tar_target(

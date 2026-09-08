@@ -1,12 +1,15 @@
-#' Generate Consensus Sequences via Docker
+#' Generate Consensus Sequences
 #'
 #' Generates consensus sequences from HybPiper output by remapping reads to
-#' contigs and calling variants. Runs a bundled bash script in the
-#' rhybphaser Docker container.
+#' contigs and calling variants, by running a bundled bash script. By default
+#' the script runs inside the `rhybphaser` Docker container; set
+#' `engine = "local"` to run it directly against tools on `PATH`
+#' (BWA, SAMtools, BCFtools, BBMap, GNU parallel).
 #'
 #' @param hybpiper_dir Path to HybPiper output directory (on host machine)
 #' @param output_dir Path to output directory for HybPhaser results (on host
 #'   machine). Will be created if it doesn't exist.
+#' @param engine One of `"docker"` (default) or `"local"`.
 #' @param namelist Path to file containing sample names, one per line. If
 #'   NULL, processes all samples in hybpiper_dir.
 #' @param sample Single sample name to process. Ignored if namelist is
@@ -55,17 +58,67 @@ run_generate_consensus_sequences <- function(
   min_depth = 10,
   min_allele_freq = 0.15,
   min_allele_count = 4,
+  engine = c("docker", "local"),
   docker_image = "joelnitta/rhybphaser:latest",
   pull_image = FALSE
 ) {
-  # Validate inputs before touching Docker so path mistakes are reported
-  # without requiring Docker to be installed or the image to be present.
+  engine <- match.arg(engine)
+
+  # Validate inputs first so path mistakes are reported without requiring
+  # Docker or local tools.
   if (!dir.exists(hybpiper_dir)) {
     stop("HybPiper directory not found: ", hybpiper_dir)
   }
 
   if (!is.null(namelist) && !file.exists(namelist)) {
     stop("Namelist file not found: ", namelist)
+  }
+
+  # Flags common to both engines.
+  common_flags <- c(
+    "-t", as.character(threads),
+    "-d", as.character(min_depth),
+    "-f", as.character(min_allele_freq),
+    "-a", as.character(min_allele_count)
+  )
+  if (intronerate) {
+    common_flags <- c(common_flags, "-i")
+  }
+  if (cleanup) {
+    common_flags <- c(common_flags, "-c")
+  }
+
+  if (engine == "local") {
+    if (!dir.exists(output_dir)) {
+      dir.create(output_dir, recursive = TRUE)
+      message("Created output directory: ", output_dir)
+    }
+    script <- hybphaser_scripts("1_generate_consensus_sequences.sh")
+    args <- c(
+      "-p", normalizePath(hybpiper_dir),
+      "-o", normalizePath(output_dir),
+      common_flags
+    )
+    if (!is.null(namelist)) {
+      args <- c(args, "-n", normalizePath(namelist))
+    } else if (!is.null(sample)) {
+      args <- c(args, "-s", sample)
+    }
+
+    message("Running consensus sequence generation locally...")
+    message("Command: ", script, " ", paste(args, collapse = " "))
+    result <- system2(script, args = args, stdout = "", stderr = "")
+
+    if (result == 0) {
+      message("Consensus sequences generated successfully")
+      message("Output directory: ", output_dir)
+    } else {
+      warning(
+        "Consensus sequence generation failed with exit code: ",
+        result
+      )
+    }
+    return(invisible(result))
   }
 
   # Validate Docker
@@ -123,20 +176,12 @@ run_generate_consensus_sequences <- function(
   }
 
   # Build command
-  cmd <- c("/opt/rhybphaser/1_generate_consensus_sequences.sh")
-  cmd <- c(cmd, "-p", "/data/hybpiper")
-  cmd <- c(cmd, "-o", container_output)
-  cmd <- c(cmd, "-t", as.character(threads))
-  cmd <- c(cmd, "-d", as.character(min_depth))
-  cmd <- c(cmd, "-f", as.character(min_allele_freq))
-  cmd <- c(cmd, "-a", as.character(min_allele_count))
-
-  if (intronerate) {
-    cmd <- c(cmd, "-i")
-  }
-  if (cleanup) {
-    cmd <- c(cmd, "-c")
-  }
+  cmd <- c(
+    "/opt/rhybphaser/1_generate_consensus_sequences.sh",
+    "-p", "/data/hybpiper",
+    "-o", container_output,
+    common_flags
+  )
 
   if (!is.null(namelist)) {
     namelist_abs <- .normalize_docker_path(namelist)
@@ -170,11 +215,12 @@ run_generate_consensus_sequences <- function(
   invisible(result)
 }
 
-#' Extract Mapped Reads via Docker
+#' Extract Mapped Reads
 #'
 #' Extracts and concatenates reads that mapped to target sequences from
-#' HybPiper or HybPhaser output. Runs a bundled bash script in the
-#' rhybphaser Docker container.
+#' HybPiper or HybPhaser output, by running a bundled bash script. By default
+#' the script runs inside the `rhybphaser` Docker container; set
+#' `engine = "local"` to run it directly.
 #'
 #' @param base_dir Path to base directory containing sample data (HybPiper
 #'   or HybPhaser output)
@@ -183,6 +229,7 @@ run_generate_consensus_sequences <- function(
 #'   NULL, processes all samples found.
 #' @param remove_duplicates Logical; if TRUE, remove duplicate sequences
 #'   (not just duplicate names)
+#' @param engine One of `"docker"` (default) or `"local"`.
 #' @param docker_image Docker image name. Default is
 #'   "joelnitta/rhybphaser:latest"
 #' @param pull_image Logical; if TRUE, pull Docker image if not found
@@ -211,17 +258,51 @@ run_extract_mapped_reads <- function(
   output_dir,
   namelist = NULL,
   remove_duplicates = FALSE,
+  engine = c("docker", "local"),
   docker_image = "joelnitta/rhybphaser:latest",
   pull_image = FALSE
 ) {
-  # Validate inputs before touching Docker so path mistakes are reported
-  # without requiring Docker to be installed or the image to be present.
+  engine <- match.arg(engine)
+
+  # Validate inputs first so path mistakes are reported without requiring
+  # Docker or local tools.
   if (!dir.exists(base_dir)) {
     stop("Base directory not found: ", base_dir)
   }
 
   if (!is.null(namelist) && !file.exists(namelist)) {
     stop("Namelist file not found: ", namelist)
+  }
+
+  if (!dir.exists(output_dir)) {
+    dir.create(output_dir, recursive = TRUE)
+    message("Created output directory: ", output_dir)
+  }
+
+  if (engine == "local") {
+    script <- hybphaser_scripts("2_extract_mapped_reads.sh")
+    args <- c(
+      "-b", normalizePath(base_dir),
+      "-o", normalizePath(output_dir)
+    )
+    if (remove_duplicates) {
+      args <- c(args, "-s")
+    }
+    if (!is.null(namelist)) {
+      args <- c(args, "-n", normalizePath(namelist))
+    }
+
+    message("Extracting mapped reads locally...")
+    message("Command: ", script, " ", paste(args, collapse = " "))
+    result <- system2(script, args = args, stdout = "", stderr = "")
+
+    if (result == 0) {
+      message("Mapped reads extracted successfully")
+      message("Output directory: ", output_dir)
+    } else {
+      warning("Extraction failed with exit code: ", result)
+    }
+    return(invisible(result))
   }
 
   # Validate Docker
@@ -236,12 +317,6 @@ run_extract_mapped_reads <- function(
       "' not found. ",
       "Set pull_image = TRUE to download it."
     )
-  }
-
-  # Create output directory if needed
-  if (!dir.exists(output_dir)) {
-    dir.create(output_dir, recursive = TRUE)
-    message("Created output directory: ", output_dir)
   }
 
   # Get absolute paths

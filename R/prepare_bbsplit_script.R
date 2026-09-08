@@ -22,11 +22,13 @@
 #'   to omit thread argument.
 #' @param java_memory_usage_clade_association Optional Java memory text for
 #'   BBSplit (e.g., `"2G"`, `"512m"`).
-#' @param docker_fallback Logical; if `TRUE` and local `bbsplit.sh` is not
-#'   available, execute BBSplit commands via Docker. Default `TRUE`.
-#' @param docker_image Docker image used for fallback execution. Default is
+#' @param engine One of `"docker"` (default) or `"local"`. With `"docker"`,
+#'   BBSplit runs in the `rhybphaser` container. With `"local"`, it runs
+#'   `bbsplit.sh` from `PATH` (or `path_to_bbmap`).
+#' @param docker_image Docker image used when `engine = "docker"`. Default is
 #'   `"joelnitta/rhybphaser:latest"`.
-#' @param pull_image Logical; if `TRUE`, pull Docker image when not available.
+#' @param pull_image Logical; if `TRUE`, pull the Docker image when not
+#'   available.
 #'
 #' @return Invisibly returns a list with script path, generated commands,
 #'   selected read files, stats folder, and run status.
@@ -54,10 +56,12 @@ run_clade_association <- function(
   path_to_bbmap = "",
   no_of_threads = 1,
   java_memory_usage_clade_association = "",
-  docker_fallback = TRUE,
+  engine = c("docker", "local"),
   docker_image = "joelnitta/rhybphaser:latest",
   pull_image = FALSE
 ) {
+  engine <- match.arg(engine)
+
   validate_paths(
     paths = list(
       "csv_file_with_clade_reference_names" = csv_file_with_clade_reference_names,
@@ -124,19 +128,18 @@ run_clade_association <- function(
     caXmx <- paste0(" -Xmx", java_memory_usage_clade_association)
   }
 
+  # Resolve a local bbsplit.sh: used to run the script when engine = "local",
+  # and baked into the generated script as a record of what was run.
   bbsplit_sh <- "bbsplit.sh"
   if (path_to_bbmap != "") {
     bbsplit_sh <- file.path(path_to_bbmap, "bbsplit.sh")
     if (!file.exists(bbsplit_sh)) {
       stop("Could not find bbsplit.sh at: ", bbsplit_sh)
     }
-  }
-
-  local_bbsplit <- ""
-  if (path_to_bbmap == "") {
+  } else {
     local_bbsplit <- Sys.which("bbsplit.sh")
-    if (local_bbsplit != "") {
-      bbsplit_sh <- local_bbsplit
+    if (nzchar(local_bbsplit)) {
+      bbsplit_sh <- unname(local_bbsplit)
     }
   }
 
@@ -161,13 +164,17 @@ run_clade_association <- function(
   writeLines(c("#!/bin/bash", commands), script_path)
   Sys.chmod(script_path, mode = "0755")
 
-  local_exec_available <- path_to_bbmap != "" || local_bbsplit != ""
-
-  if (local_exec_available) {
+  if (engine == "local") {
+    if (identical(bbsplit_sh, "bbsplit.sh") || !file.exists(bbsplit_sh)) {
+      stop(
+        "engine = \"local\" but bbsplit.sh was not found. Install BBMap and ",
+        "put it on PATH, set path_to_bbmap, or use engine = \"docker\"."
+      )
+    }
     run_status <- system2(script_path, stdout = "", stderr = "")
-  } else if (isTRUE(docker_fallback)) {
+  } else {
     if (!check_docker(quiet = TRUE)) {
-      stop("Docker is not available for BBSplit fallback execution")
+      stop("engine = \"docker\" but Docker is not available")
     }
     if (!check_docker_image(docker_image, pull = pull_image)) {
       stop(
@@ -184,11 +191,6 @@ run_clade_association <- function(
       path_to_read_files_cladeassociation = path_to_read_files_cladeassociation,
       folder_bbsplit_stats = folder_bbsplit_stats,
       docker_image = docker_image
-    )
-  } else {
-    stop(
-      "bbsplit.sh not found on PATH. Install BBMap, provide path_to_bbmap,",
-      " or set docker_fallback = TRUE."
     )
   }
 
@@ -268,11 +270,20 @@ run_bbsplit_commands_in_docker <- function(
 #' BBSplit clade association.
 #'
 #' @param config_file Path to HybPhaser configuration file.
+#' @param engine One of `"docker"` (default) or `"local"`; passed to
+#'   [run_clade_association()].
+#' @param pull_image Logical; if `TRUE`, pull the Docker image when not
+#'   available.
 #'
 #' @return Invisibly returns a list with script path, commands, selected read
 #'   files, stats folder, and run status.
 #' @export
-run_clade_association_from_config <- function(config_file = "./config.txt") {
+run_clade_association_from_config <- function(
+  config_file = "./config.txt",
+  engine = c("docker", "local"),
+  pull_image = FALSE
+) {
+  engine <- match.arg(engine)
   required <- c(
     "path_to_clade_association_folder",
     "csv_file_with_clade_reference_names",
@@ -300,7 +311,9 @@ run_clade_association_from_config <- function(config_file = "./config.txt") {
     file_with_samples_included = cfg$file_with_samples_included,
     path_to_bbmap = cfg$path_to_bbmap,
     no_of_threads = cfg$no_of_threads_clade_association,
-    java_memory_usage_clade_association = cfg$java_memory_usage_clade_association
+    java_memory_usage_clade_association = cfg$java_memory_usage_clade_association,
+    engine = engine,
+    pull_image = pull_image
   )
 }
 

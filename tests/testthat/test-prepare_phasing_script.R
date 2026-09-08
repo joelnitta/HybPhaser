@@ -72,7 +72,8 @@ test_that("run_phasing builds and runs single-end commands", {
     reference_sequence_folder = refs,
     path_to_bbmap_executables = bbmap,
     no_of_threads_phasing = 2,
-    java_memory_usage_phasing = "1G"
+    java_memory_usage_phasing = "1G",
+    engine = "local"
   )
 
   expect_true(file.exists(res$script_path))
@@ -123,7 +124,8 @@ test_that("run_phasing builds paired-end commands", {
     ID_read_pair1 = "_R1.fastq",
     ID_read_pair2 = "_R2.fastq",
     reference_sequence_folder = refs,
-    path_to_bbmap_executables = bbmap
+    path_to_bbmap_executables = bbmap,
+    engine = "local"
   )
 
   expect_equal(length(res$commands), 1)
@@ -168,11 +170,50 @@ test_that("run_phasing can execute generated script", {
     path_to_read_files_phasing = reads,
     read_type_4phasing = "single-end",
     reference_sequence_folder = refs,
-    path_to_bbmap_executables = bbmap
+    path_to_bbmap_executables = bbmap,
+    engine = "local"
   )
 
   expect_equal(res$run_status, 0)
   expect_true(file.exists(res$script_path))
+
+  unlink(tmp, recursive = TRUE)
+})
+
+
+test_that("run_phasing with engine = docker requires Docker", {
+  local_mocked_bindings(
+    check_docker = function(quiet = FALSE) FALSE,
+    .package = "rhybphaser"
+  )
+
+  tmp <- tempfile()
+  dir.create(tmp)
+  refs <- file.path(tmp, "refs")
+  reads <- file.path(tmp, "reads")
+  out <- file.path(tmp, "out")
+  dir.create(refs)
+  dir.create(reads)
+  writeLines(c(">ref1", "ATCG"), file.path(refs, "ref1_consensus.fasta"))
+  prep <- file.path(tmp, "phasing_prep.csv")
+  utils::write.csv(
+    data.frame(sample = "S1", ref1 = "ref1", abb1 = "R1"),
+    prep,
+    row.names = FALSE
+  )
+  writeLines(c("@r1", "AAAA"), file.path(reads, "S1.fastq"))
+
+  expect_error(
+    run_phasing(
+      path_to_phasing_folder = out,
+      csv_file_with_phasing_prep_info = prep,
+      path_to_read_files_phasing = reads,
+      read_type_4phasing = "single-end",
+      reference_sequence_folder = refs,
+      engine = "docker"
+    ),
+    "Docker is not available"
+  )
 
   unlink(tmp, recursive = TRUE)
 })
@@ -222,7 +263,7 @@ test_that("run_phasing_from_config reads config values", {
     cfg
   )
 
-  res <- run_phasing_from_config(cfg)
+  res <- run_phasing_from_config(cfg, engine = "local")
   expect_true(file.exists(res$script_path))
   expect_equal(length(res$commands), 1)
   expect_equal(res$run_status, 0)

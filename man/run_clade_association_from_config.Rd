@@ -4,10 +4,20 @@
 \alias{run_clade_association_from_config}
 \title{Run BBSplit Clade Association Using a HybPhaser Config File}
 \usage{
-run_clade_association_from_config(config_file = "./config.txt")
+run_clade_association_from_config(
+  config_file = "./config.txt",
+  engine = c("docker", "local"),
+  pull_image = FALSE
+)
 }
 \arguments{
 \item{config_file}{Path to HybPhaser configuration file.}
+
+\item{engine}{One of \code{"docker"} (default) or \code{"local"}; passed to
+\code{\link[=run_clade_association]{run_clade_association()}}.}
+
+\item{pull_image}{Logical; if \code{TRUE}, pull the Docker image when not
+available.}
 }
 \value{
 Invisibly returns a list with script path, commands, selected read

@@ -15,6 +15,7 @@ run_consensus_sequences(
   min_depth = 10,
   min_allele_freq = 0.15,
   min_allele_count = 4,
+  engine = c("docker", "local"),
   docker_image = "joelnitta/rhybphaser:latest",
   pull_image = FALSE
 )
@@ -45,6 +46,8 @@ calling heterozygous sites. Default is 0.15.}
 
 \item{min_allele_count}{Integer; minimum number of reads supporting an
 allele. Default is 4.}
+
+\item{engine}{One of \code{"docker"} (default) or \code{"local"}.}
 
 \item{docker_image}{Docker image name. Default is
 "joelnitta/rhybphaser:latest"}

@@ -17,7 +17,7 @@ run_phasing(
   path_to_bbmap_executables = "",
   no_of_threads_phasing = 1,
   java_memory_usage_phasing = "",
-  docker_fallback = TRUE,
+  engine = c("docker", "local"),
   docker_image = "joelnitta/rhybphaser:latest",
   pull_image = FALSE
 )
@@ -53,12 +53,13 @@ If empty, \code{bbsplit.sh} is expected on \code{PATH}.}
 
 \item{java_memory_usage_phasing}{Optional Java memory (e.g., \code{"2G"}).}
 
-\item{docker_fallback}{Logical; if \code{TRUE} and local \code{bbsplit.sh} is not
-available, execute phasing commands via Docker.}
+\item{engine}{One of \code{"docker"} (default) or \code{"local"}. With \code{"docker"},
+BBSplit runs in the \code{rhybphaser} container. With \code{"local"}, it runs
+\code{bbsplit.sh} from \code{PATH} (or \code{path_to_bbmap_executables}).}
 
-\item{docker_image}{Docker image used for fallback execution.}
+\item{docker_image}{Docker image used when \code{engine = "docker"}.}
 
-\item{pull_image}{Logical; if \code{TRUE}, pull Docker image when missing.}
+\item{pull_image}{Logical; if \code{TRUE}, pull the Docker image when missing.}
 }
 \value{
 Invisibly returns a list with script path, commands, output folders,

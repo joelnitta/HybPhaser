@@ -48,9 +48,15 @@ sequence lists ready for phylogenetic analysis.
 | Assess dataset, filter samples & loci, flag paralogs | `assess_dataset()` | R |
 | Generate per-locus / per-sample FASTA lists | `generate_sequence_lists()` | R |
 | Extract on-target reads | `extract_mapped_reads()` | R |
-| Clade association (BBSplit) | `run_clade_association()` → `collate_bbsplit_results()` | local BBSplit, Docker fallback |
-| Phasing (BBSplit) | `run_phasing()` → `collate_phasing_stats()` | local BBSplit, Docker fallback |
+| Clade association (BBSplit) | `run_clade_association()` → `collate_bbsplit_results()` | Docker |
+| Phasing (BBSplit) | `run_phasing()` → `collate_phasing_stats()` | Docker |
 | Merge phased & non-phased lists | `merge_sequence_lists()` | R |
+
+Every function that shells out to an external tool takes
+`engine = c("docker", "local")` and defaults to `"docker"` (the pinned
+`rhybphaser` image). Pass `engine = "local"` to use `bwa`/`samtools`/`bcftools`/
+`bbsplit.sh` from your `PATH` instead — for example on an HPC system without
+Docker.
 
 Each clade-association / phasing / merge function also has a `*_from_config()`
 variant that reads its arguments from a `config.txt` file (`read_config()`), for

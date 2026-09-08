@@ -2,13 +2,14 @@
 % Please edit documentation in R/docker_workflows.R
 \name{run_extract_mapped_reads}
 \alias{run_extract_mapped_reads}
-\title{Extract Mapped Reads via Docker}
+\title{Extract Mapped Reads}
 \usage{
 run_extract_mapped_reads(
   base_dir,
   output_dir,
   namelist = NULL,
   remove_duplicates = FALSE,
+  engine = c("docker", "local"),
   docker_image = "joelnitta/rhybphaser:latest",
   pull_image = FALSE
 )
@@ -25,6 +26,8 @@ NULL, processes all samples found.}
 \item{remove_duplicates}{Logical; if TRUE, remove duplicate sequences
 (not just duplicate names)}
 
+\item{engine}{One of \code{"docker"} (default) or \code{"local"}.}
+
 \item{docker_image}{Docker image name. Default is
 "joelnitta/rhybphaser:latest"}
 
@@ -35,8 +38,9 @@ Exit code (0 for success, non-zero for failure)
 }
 \description{
 Extracts and concatenates reads that mapped to target sequences from
-HybPiper or HybPhaser output. Runs a bundled bash script in the
-rhybphaser Docker container.
+HybPiper or HybPhaser output, by running a bundled bash script. By default
+the script runs inside the \code{rhybphaser} Docker container; set
+\code{engine = "local"} to run it directly.
 }
 \examples{
 \dontrun{

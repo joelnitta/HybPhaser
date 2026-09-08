@@ -216,8 +216,7 @@ bbsplit_job <- run_clade_association(
     "hybphaser_output",
     "mapped_reads"
   ),
-  read_type_cladeassociation = "single-end",
-  docker_fallback = TRUE
+  read_type_cladeassociation = "single-end"
 )
 
 cat("\nBBSplit clade association run completed:\n")
@@ -274,8 +273,7 @@ phasing_job <- run_phasing(
     "mapped_reads"
   ),
   read_type_4phasing = "single-end",
-  reference_sequence_folder = reference_dir,
-  docker_fallback = TRUE
+  reference_sequence_folder = reference_dir
 )
 
 cat("\nPhasing run completed:\n")

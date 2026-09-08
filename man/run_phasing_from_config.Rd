@@ -4,10 +4,19 @@
 \alias{run_phasing_from_config}
 \title{Run BBSplit Phasing Using a HybPhaser Config File}
 \usage{
-run_phasing_from_config(config_file = "./config.txt")
+run_phasing_from_config(
+  config_file = "./config.txt",
+  engine = c("docker", "local"),
+  pull_image = FALSE
+)
 }
 \arguments{
 \item{config_file}{Path to HybPhaser configuration file.}
+
+\item{engine}{One of \code{"docker"} (default) or \code{"local"}; passed to
+\code{\link[=run_phasing]{run_phasing()}}.}
+
+\item{pull_image}{Logical; if \code{TRUE}, pull the Docker image when missing.}
 }
 \value{
 Invisibly returns the same object as \code{run_phasing()}.
