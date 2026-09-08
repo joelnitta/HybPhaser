@@ -6,8 +6,7 @@
 
 `rhybphaser` is an R package implementation of the **HybPhaser** method for
 detecting and phasing hybrid and polyploid accessions in target-capture
-datasets. It is an extension to the
-[HybPiper](https://github.com/mossmatters/HybPiper) assembly pipeline.
+datasets.
 
 It is a reimplementation of the original
 [HybPhaser](https://github.com/LarsNauheimer/HybPhaser) collection of R and
@@ -26,15 +25,17 @@ pak::pak("joelnitta/rhybphaser")
 ### System requirements
 
 - **R** ≥ 4.0
-- **Docker** — consensus generation (BWA, SAMtools, BCFtools) and, as a
-  fallback, clade association / phasing (BBSplit) run inside the
-  `joelnitta/rhybphaser` image. The Docker-backed functions pull and run it for
-  you; pass `pull_image = TRUE` on first use. See [`DOCKER.md`](DOCKER.md).
-  BBSplit steps use a local install if one is on `PATH`.
-- **HybPiper in a conda environment** — only needed if you use `rhybphaser` to
-  *run* the assembly steps (`run_hybpiper_test_dataset()`, `hybpiper_assemble()`,
-  `run_phased_hybpiper()`). If you already have HybPiper output, it is not
-  required.
+- **Docker** — consensus generation (BWA, SAMtools, BCFtools) and clade
+  association / phasing (BBSplit) run inside the `joelnitta/rhybphaser` image.
+  These functions pull and run it for you; pass `pull_image = TRUE` on first
+  use. See [`DOCKER.md`](DOCKER.md). Not required if you run every step with
+  `engine = "local"` and have the tools on `PATH`.
+- **HybPiper in a conda environment** (default name `hybpiper_env`) — only
+  needed for the functions that *run* HybPiper: `hybpiper_assemble()`,
+  `hybpiper_stats()`, `run_hybpiper_test_dataset()`,
+  `run_hybpiper_test_dataset_clean()`, `run_phased_hybpiper()`. These use conda
+  directly, not Docker. If you already have HybPiper output, they are not
+  needed.
 
 ## Workflow
 
