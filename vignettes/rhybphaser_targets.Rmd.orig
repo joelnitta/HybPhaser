@@ -377,7 +377,7 @@ res$dataset_assessment$loci_removed_paralogs_all
 `assess_dataset()` also writes this as a plot
 (`02_assessment/3_LH_vs_AD.png`); the same view of the summary table:
 
-```{r results-fig, eval = run_targets_vignette, echo = FALSE, fig.width = 6, fig.height = 5, out.width = "70%", fig.alt = "Locus heterozygosity versus allele divergence, one point per sample"}
+```{r results-fig, eval = run_targets_vignette, echo = FALSE, fig.width = 6, fig.height = 5, out.width = "70%", fig.cap = "", fig.alt = "Locus heterozygosity versus allele divergence, one point per sample"}
 st <- res$dataset_assessment$summary_table
 plot(
   st$allele_divergence, st$locus_heterozygosity,
