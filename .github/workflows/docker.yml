@@ -28,12 +28,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Detect Docker Hub credentials
+      - name: Decide whether to push
         id: creds
         env:
           DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+          EVENT: ${{ github.event_name }}
         run: |
-          if [ -n "$DOCKERHUB_TOKEN" ] && [ "${{ github.event_name }}" = "push" ]; then
+          if [ -n "$DOCKERHUB_TOKEN" ] && { [ "$EVENT" = "push" ] || [ "$EVENT" = "workflow_dispatch" ]; }; then
             echo "push=true" >> "$GITHUB_OUTPUT"
           else
             echo "push=false" >> "$GITHUB_OUTPUT"
