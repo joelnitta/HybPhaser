@@ -21,7 +21,7 @@ library(rhybphaser)
 has_docker <- check_docker(quiet = TRUE)
 has_image <- FALSE
 if (has_docker) {
-  has_image <- check_docker_image("joelnitta/hybphaser:latest",
+  has_image <- check_docker_image("joelnitta/rhybphaser:latest",
     pull = FALSE
   )
 }
@@ -94,7 +94,7 @@ continue directly with HybPhaser:
 check_conda()
 check_hybpiper_conda("hybpiper_env")
 check_docker()
-check_docker_image("joelnitta/hybphaser:latest", pull = TRUE)
+check_docker_image("joelnitta/rhybphaser:latest", pull = TRUE)
 
 # 1. Download and run official HybPiper test data using conda
 hp_data <- run_hybpiper_test_dataset(
