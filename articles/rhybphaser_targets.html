@@ -69,319 +69,387 @@
 <div class="section level2">
 <h2 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
 </h2>
-<p>This vignette shows how to run the HybPhaser end-to-end workflow with
-{targets}. The analysis steps are the same as the standard workflow
-vignette, but dependencies are declared explicitly in a pipeline.</p>
-<p>Using {targets} gives you:</p>
+<p>This vignette runs the same end-to-end analysis as
+<code><a href="../articles/rhybphaser.html">vignette("rhybphaser")</a></code>, but as a <a href="https://docs.ropensci.org/targets/" class="external-link"><code>targets</code></a>
+pipeline. Compared with a plain script, <code>targets</code> gives
+you:</p>
 <ul>
-<li>Reproducibility: each target records what code and data created
-it</li>
-<li>Caching: up-to-date steps are skipped automatically</li>
-<li>Visibility: the full pipeline graph can be inspected and
-debugged</li>
+<li>
+<strong>Caching</strong> — re-running only re-computes steps whose
+inputs changed.</li>
+<li>
+<strong>Reproducibility</strong> — every result records the code and
+data that made it.</li>
+<li>
+<strong>Inspection</strong> — the dependency graph can be visualised
+(<code><a href="https://docs.ropensci.org/targets/reference/tar_visnetwork.html" class="external-link">tar_visnetwork()</a></code>) and any intermediate result read back
+with <code><a href="https://docs.ropensci.org/targets/reference/tar_read.html" class="external-link">tar_read()</a></code>.</li>
 </ul>
+<p>The pipeline is self-contained: it downloads the official HybPiper
+test dataset, assembles it, and generates the clade-association and
+phasing input CSVs inside the pipeline, so there are no files to
+prepare.</p>
 </div>
 <div class="section level2">
-<h2 id="inputs">Inputs<a class="anchor" aria-label="anchor" href="#inputs"></a>
+<h2 id="the-pipeline">The pipeline<a class="anchor" aria-label="anchor" href="#the-pipeline"></a>
 </h2>
-<p>This workflow is self-contained. It downloads and runs the official
-HybPiper test dataset, then generates clade-association and phasing CSV
-files inside the pipeline.</p>
-</div>
-<div class="section level2">
-<h2 id="create-pipeline-script-from-the-vignette">Create Pipeline Script from the Vignette<a class="anchor" aria-label="anchor" href="#create-pipeline-script-from-the-vignette"></a>
-</h2>
-<p><code><a href="https://docs.ropensci.org/targets/reference/tar_script.html" class="external-link">targets::tar_script()</a></code> writes a <code>_targets.R</code>
-file from R code. This lets you define and maintain your pipeline
-directly in the vignette.</p>
+<p>Put the following in <code>_targets.R</code> at the root of your
+project. Each <code><a href="https://docs.ropensci.org/targets/reference/tar_target.html" class="external-link">tar_target()</a></code> wraps one
+<code>rhybphaser</code> step; the comments mark the parts of the
+HybPhaser workflow.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">targets</span><span class="fu">::</span><span class="fu"><a href="https://docs.ropensci.org/targets/reference/tar_dir.html" class="external-link">tar_dir</a></span><span class="op">(</span><span class="op">{</span></span>
-<span>  <span class="fu">targets</span><span class="fu">::</span><span class="fu"><a href="https://docs.ropensci.org/targets/reference/tar_script.html" class="external-link">tar_script</a></span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://docs.ropensci.org/targets/" class="external-link">targets</a></span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://docs.ropensci.org/tarchetypes/" class="external-link">tarchetypes</a></span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/joelnitta/rhybphaser" class="external-link">rhybphaser</a></span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://docs.ropensci.org/targets/reference/tar_option_set.html" class="external-link">tar_option_set</a></span><span class="op">(</span>format <span class="op">=</span> <span class="st">"rds"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://docs.ropensci.org/tarchetypes/reference/tar_plan.html" class="external-link">tar_plan</a></span><span class="op">(</span></span>
+<span></span>
+<span>  <span class="co">## Setup: download + assemble the official HybPiper test dataset --------</span></span>
+<span>  <span class="fu"><a href="https://docs.ropensci.org/targets/reference/tar_target.html" class="external-link">tar_target</a></span><span class="op">(</span></span>
+<span>    <span class="va">hp_data</span>,</span>
+<span>    <span class="fu"><a href="../reference/run_hybpiper_test_dataset_clean.html">run_hybpiper_test_dataset_clean</a></span><span class="op">(</span></span>
+<span>      output_dir <span class="op">=</span> <span class="st">"targets_hybpiper_test"</span>,</span>
+<span>      samples <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"EG30"</span>, <span class="st">"EG98"</span>, <span class="st">"MWL2"</span><span class="op">)</span>,</span>
+<span>      conda_env <span class="op">=</span> <span class="st">"hybpiper_env"</span>,</span>
+<span>      cpu <span class="op">=</span> <span class="fl">2</span>,</span>
+<span>      mapper <span class="op">=</span> <span class="st">"bwa"</span></span>
+<span>    <span class="op">)</span></span>
+<span>  <span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://docs.ropensci.org/targets/reference/tar_target.html" class="external-link">tar_target</a></span><span class="op">(</span><span class="va">hybpiper_dir</span>, <span class="va">hp_data</span><span class="op">$</span><span class="va">hybpiper_dir</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://docs.ropensci.org/targets/reference/tar_target.html" class="external-link">tar_target</a></span><span class="op">(</span><span class="va">namelist</span>, <span class="va">hp_data</span><span class="op">$</span><span class="va">namelist</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://docs.ropensci.org/targets/reference/tar_target.html" class="external-link">tar_target</a></span><span class="op">(</span><span class="va">targets_file</span>, <span class="va">hp_data</span><span class="op">$</span><span class="va">targets_file</span><span class="op">)</span>,</span>
+<span></span>
+<span>  <span class="co">## Part 1: SNP assessment ---------------------------------------------</span></span>
+<span>  <span class="fu"><a href="https://docs.ropensci.org/targets/reference/tar_target.html" class="external-link">tar_target</a></span><span class="op">(</span></span>
+<span>    <span class="va">hybphaser_output_dir</span>,</span>
+<span>    <span class="fu"><a href="../reference/run_consensus_sequences.html">run_consensus_sequences</a></span><span class="op">(</span></span>
+<span>      hybpiper_dir <span class="op">=</span> <span class="va">hybpiper_dir</span>,</span>
+<span>      output_dir <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">hybpiper_dir</span>, <span class="st">"hybphaser_output"</span><span class="op">)</span>,</span>
+<span>      namelist <span class="op">=</span> <span class="va">namelist</span>,</span>
+<span>      threads <span class="op">=</span> <span class="fl">2</span></span>
+<span>    <span class="op">)</span></span>
+<span>  <span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://docs.ropensci.org/targets/reference/tar_target.html" class="external-link">tar_target</a></span><span class="op">(</span></span>
+<span>    <span class="va">snp_results</span>,</span>
+<span>    <span class="fu"><a href="../reference/count_snps.html">count_snps</a></span><span class="op">(</span></span>
+<span>      path_to_output_folder <span class="op">=</span> <span class="va">hybphaser_output_dir</span>,</span>
+<span>      fasta_file_with_targets <span class="op">=</span> <span class="va">targets_file</span>,</span>
+<span>      targets_file_format <span class="op">=</span> <span class="st">"DNA"</span>,</span>
+<span>      path_to_namelist <span class="op">=</span> <span class="va">namelist</span></span>
+<span>    <span class="op">)</span></span>
+<span>  <span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://docs.ropensci.org/targets/reference/tar_target.html" class="external-link">tar_target</a></span><span class="op">(</span></span>
+<span>    <span class="va">dataset_assessment</span>,</span>
+<span>    <span class="fu"><a href="../reference/assess_dataset.html">assess_dataset</a></span><span class="op">(</span></span>
+<span>      snp_table <span class="op">=</span> <span class="va">snp_results</span><span class="op">$</span><span class="va">tab_snps</span>,</span>
+<span>      length_table <span class="op">=</span> <span class="va">snp_results</span><span class="op">$</span><span class="va">tab_length</span>,</span>
+<span>      targets_file <span class="op">=</span> <span class="va">targets_file</span>,</span>
+<span>      targets_type <span class="op">=</span> <span class="st">"DNA"</span>,</span>
+<span>      output_dir <span class="op">=</span> <span class="va">hybphaser_output_dir</span>,</span>
+<span>      min_loci_per_sample_prop <span class="op">=</span> <span class="fl">0.5</span>,</span>
+<span>      min_samples_per_locus_prop <span class="op">=</span> <span class="fl">0.5</span>,</span>
+<span>      paralog_threshold <span class="op">=</span> <span class="st">"outliers"</span></span>
+<span>    <span class="op">)</span></span>
+<span>  <span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://docs.ropensci.org/targets/reference/tar_target.html" class="external-link">tar_target</a></span><span class="op">(</span></span>
+<span>    <span class="va">sequence_lists</span>,</span>
+<span>    <span class="fu"><a href="../reference/generate_sequence_lists_after_assessment.html">generate_sequence_lists_after_assessment</a></span><span class="op">(</span></span>
+<span>      assessment <span class="op">=</span> <span class="va">dataset_assessment</span>,</span>
+<span>      path_to_output_folder <span class="op">=</span> <span class="va">hybphaser_output_dir</span>,</span>
+<span>      fasta_file_with_targets <span class="op">=</span> <span class="va">targets_file</span>,</span>
+<span>      targets_file_format <span class="op">=</span> <span class="st">"DNA"</span>,</span>
+<span>      path_to_namelist <span class="op">=</span> <span class="va">namelist</span></span>
+<span>    <span class="op">)</span></span>
+<span>  <span class="op">)</span>,</span>
+<span></span>
+<span>  <span class="co">## Clade-association / phasing input CSVs ------------------------------</span></span>
+<span>  <span class="fu"><a href="https://docs.ropensci.org/targets/reference/tar_target.html" class="external-link">tar_target</a></span><span class="op">(</span></span>
+<span>    <span class="va">reference_dir</span>,</span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">hybphaser_output_dir</span>, <span class="st">"03_sequence_lists"</span>, <span class="st">"samples_consensus"</span><span class="op">)</span></span>
+<span>  <span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://docs.ropensci.org/targets/reference/tar_target.html" class="external-link">tar_target</a></span><span class="op">(</span></span>
+<span>    <span class="va">reference_samples</span>,</span>
+<span>    <span class="fu"><a href="../reference/get_reference_samples.html">get_reference_samples</a></span><span class="op">(</span></span>
+<span>      sequence_lists <span class="op">=</span> <span class="va">sequence_lists</span>,</span>
+<span>      reference_dir <span class="op">=</span> <span class="va">reference_dir</span></span>
+<span>    <span class="op">)</span></span>
+<span>  <span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://docs.ropensci.org/targets/reference/tar_target.html" class="external-link">tar_target</a></span><span class="op">(</span></span>
+<span>    <span class="va">clade_ref_csv</span>,</span>
+<span>    <span class="fu"><a href="../reference/write_clade_reference_csv.html">write_clade_reference_csv</a></span><span class="op">(</span></span>
+<span>      reference_samples <span class="op">=</span> <span class="va">reference_samples</span>,</span>
+<span>      output_file <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span></span>
+<span>        <span class="va">hybphaser_output_dir</span>, <span class="st">"04_clade_association"</span>,</span>
+<span>        <span class="st">"clade_references_example.csv"</span></span>
+<span>      <span class="op">)</span></span>
+<span>    <span class="op">)</span>,</span>
+<span>    format <span class="op">=</span> <span class="st">"file"</span></span>
+<span>  <span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://docs.ropensci.org/targets/reference/tar_target.html" class="external-link">tar_target</a></span><span class="op">(</span></span>
+<span>    <span class="va">phasing_prep_csv</span>,</span>
 <span>    <span class="op">{</span></span>
-<span>      <span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://docs.ropensci.org/targets/" class="external-link">targets</a></span><span class="op">)</span></span>
-<span>      <span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://docs.ropensci.org/tarchetypes/" class="external-link">tarchetypes</a></span><span class="op">)</span></span>
-<span>      <span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/joelnitta/rhybphaser" class="external-link">rhybphaser</a></span><span class="op">)</span></span>
-<span></span>
-<span>      <span class="fu"><a href="https://docs.ropensci.org/targets/reference/tar_option_set.html" class="external-link">tar_option_set</a></span><span class="op">(</span></span>
-<span>        format <span class="op">=</span> <span class="st">"rds"</span></span>
+<span>      <span class="co"># In a real analysis the phasing table is built by hand from the</span></span>
+<span>      <span class="co"># clade-association results: one row per accession to phase, with its</span></span>
+<span>      <span class="co"># parental references. write_phasing_prep_csv() writes a one-reference</span></span>
+<span>      <span class="co"># template. Here, for illustration, phase the first sample against the</span></span>
+<span>      <span class="co"># other two as if they were its parents.</span></span>
+<span>      <span class="va">path</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span></span>
+<span>        <span class="va">hybphaser_output_dir</span>, <span class="st">"05_phasing"</span>, <span class="st">"phasing_prep_example.csv"</span></span>
 <span>      <span class="op">)</span></span>
-<span></span>
-<span>      <span class="fu"><a href="https://docs.ropensci.org/tarchetypes/reference/tar_plan.html" class="external-link">tar_plan</a></span><span class="op">(</span></span>
-<span>        <span class="co"># setup from official HybPiper test dataset ----</span></span>
-<span>        <span class="fu"><a href="https://docs.ropensci.org/targets/reference/tar_target.html" class="external-link">tar_target</a></span><span class="op">(</span></span>
-<span>          <span class="va">hp_data</span>,</span>
-<span>          <span class="fu"><a href="../reference/run_hybpiper_test_dataset_clean.html">run_hybpiper_test_dataset_clean</a></span><span class="op">(</span></span>
-<span>            output_dir <span class="op">=</span> <span class="st">"targets_hybpiper_test"</span>,</span>
-<span>            samples <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"EG30"</span><span class="op">)</span>,</span>
-<span>            conda_env <span class="op">=</span> <span class="st">"hybpiper_env"</span>,</span>
-<span>            cpu <span class="op">=</span> <span class="fl">1</span>,</span>
-<span>            mapper <span class="op">=</span> <span class="st">"bwa"</span></span>
-<span>          <span class="op">)</span></span>
+<span>      <span class="fu"><a href="https://rdrr.io/r/base/files2.html" class="external-link">dir.create</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/basename.html" class="external-link">dirname</a></span><span class="op">(</span><span class="va">path</span><span class="op">)</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span>, showWarnings <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span>      <span class="fu">utils</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/utils/write.table.html" class="external-link">write.csv</a></span><span class="op">(</span></span>
+<span>        <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
+<span>          sample <span class="op">=</span> <span class="va">reference_samples</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span>,</span>
+<span>          ref1 <span class="op">=</span> <span class="va">reference_samples</span><span class="op">[[</span><span class="fl">2</span><span class="op">]</span><span class="op">]</span>, abb1 <span class="op">=</span> <span class="st">"P1"</span>,</span>
+<span>          ref2 <span class="op">=</span> <span class="va">reference_samples</span><span class="op">[[</span><span class="fl">3</span><span class="op">]</span><span class="op">]</span>, abb2 <span class="op">=</span> <span class="st">"P2"</span></span>
 <span>        <span class="op">)</span>,</span>
-<span>        <span class="fu"><a href="https://docs.ropensci.org/targets/reference/tar_target.html" class="external-link">tar_target</a></span><span class="op">(</span><span class="va">hybpiper_dir</span>, <span class="va">hp_data</span><span class="op">$</span><span class="va">hybpiper_dir</span><span class="op">)</span>,</span>
-<span>        <span class="fu"><a href="https://docs.ropensci.org/targets/reference/tar_target.html" class="external-link">tar_target</a></span><span class="op">(</span><span class="va">namelist</span>, <span class="va">hp_data</span><span class="op">$</span><span class="va">namelist</span><span class="op">)</span>,</span>
-<span>        <span class="fu"><a href="https://docs.ropensci.org/targets/reference/tar_target.html" class="external-link">tar_target</a></span><span class="op">(</span><span class="va">targets_file</span>, <span class="va">hp_data</span><span class="op">$</span><span class="va">targets_file</span><span class="op">)</span>,</span>
-<span></span>
-<span>        <span class="co"># part 1 normal run ----</span></span>
-<span>        <span class="fu"><a href="https://docs.ropensci.org/targets/reference/tar_target.html" class="external-link">tar_target</a></span><span class="op">(</span></span>
-<span>          <span class="va">hybphaser_output_dir</span>,</span>
-<span>          <span class="fu"><a href="../reference/run_consensus_sequences.html">run_consensus_sequences</a></span><span class="op">(</span></span>
-<span>            hybpiper_dir <span class="op">=</span> <span class="va">hybpiper_dir</span>,</span>
-<span>            output_dir <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">hybpiper_dir</span>, <span class="st">"hybphaser_output"</span><span class="op">)</span>,</span>
-<span>            namelist <span class="op">=</span> <span class="va">namelist</span>,</span>
-<span>            threads <span class="op">=</span> <span class="fl">1</span></span>
-<span>          <span class="op">)</span></span>
-<span>        <span class="op">)</span>,</span>
-<span>        <span class="fu"><a href="https://docs.ropensci.org/targets/reference/tar_target.html" class="external-link">tar_target</a></span><span class="op">(</span></span>
-<span>          <span class="va">snp_results</span>,</span>
-<span>          <span class="fu"><a href="../reference/count_snps.html">count_snps</a></span><span class="op">(</span></span>
-<span>            path_to_output_folder <span class="op">=</span> <span class="va">hybphaser_output_dir</span>,</span>
-<span>            fasta_file_with_targets <span class="op">=</span> <span class="va">targets_file</span>,</span>
-<span>            targets_file_format <span class="op">=</span> <span class="st">"DNA"</span>,</span>
-<span>            path_to_namelist <span class="op">=</span> <span class="va">namelist</span></span>
-<span>          <span class="op">)</span></span>
-<span>        <span class="op">)</span>,</span>
-<span>        <span class="fu"><a href="https://docs.ropensci.org/targets/reference/tar_target.html" class="external-link">tar_target</a></span><span class="op">(</span></span>
-<span>          <span class="va">dataset_assessment</span>,</span>
-<span>          <span class="fu"><a href="../reference/assess_dataset.html">assess_dataset</a></span><span class="op">(</span></span>
-<span>            snp_table <span class="op">=</span> <span class="va">snp_results</span><span class="op">$</span><span class="va">tab_snps</span>,</span>
-<span>            length_table <span class="op">=</span> <span class="va">snp_results</span><span class="op">$</span><span class="va">tab_length</span>,</span>
-<span>            targets_file <span class="op">=</span> <span class="va">targets_file</span>,</span>
-<span>            targets_type <span class="op">=</span> <span class="st">"DNA"</span>,</span>
-<span>            output_dir <span class="op">=</span> <span class="va">hybphaser_output_dir</span>,</span>
-<span>            min_loci_per_sample_prop <span class="op">=</span> <span class="fl">0.5</span>,</span>
-<span>            min_samples_per_locus_prop <span class="op">=</span> <span class="fl">0.5</span>,</span>
-<span>            paralog_threshold <span class="op">=</span> <span class="st">"outliers"</span>,</span>
-<span>            remove_sample_outliers <span class="op">=</span> <span class="cn">TRUE</span></span>
-<span>          <span class="op">)</span></span>
-<span>        <span class="op">)</span>,</span>
-<span>        <span class="fu"><a href="https://docs.ropensci.org/targets/reference/tar_target.html" class="external-link">tar_target</a></span><span class="op">(</span></span>
-<span>          <span class="va">sequence_lists</span>,</span>
-<span>          <span class="fu"><a href="../reference/generate_sequence_lists_after_assessment.html">generate_sequence_lists_after_assessment</a></span><span class="op">(</span></span>
-<span>            assessment <span class="op">=</span> <span class="va">dataset_assessment</span>,</span>
-<span>            path_to_output_folder <span class="op">=</span> <span class="va">hybphaser_output_dir</span>,</span>
-<span>            fasta_file_with_targets <span class="op">=</span> <span class="va">targets_file</span>,</span>
-<span>            targets_file_format <span class="op">=</span> <span class="st">"DNA"</span>,</span>
-<span>            path_to_namelist <span class="op">=</span> <span class="va">namelist</span></span>
-<span>          <span class="op">)</span></span>
-<span>        <span class="op">)</span>,</span>
-<span></span>
-<span>        <span class="co"># generate clade/phasing input tables ----</span></span>
-<span>        <span class="fu"><a href="https://docs.ropensci.org/targets/reference/tar_target.html" class="external-link">tar_target</a></span><span class="op">(</span></span>
-<span>          <span class="va">reference_dir</span>,</span>
-<span>          <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">hybphaser_output_dir</span>, <span class="st">"03_sequence_lists"</span>, <span class="st">"samples_consensus"</span><span class="op">)</span></span>
-<span>        <span class="op">)</span>,</span>
-<span>        <span class="fu"><a href="https://docs.ropensci.org/targets/reference/tar_target.html" class="external-link">tar_target</a></span><span class="op">(</span></span>
-<span>          <span class="va">reference_samples</span>,</span>
-<span>          <span class="fu"><a href="../reference/get_reference_samples.html">get_reference_samples</a></span><span class="op">(</span></span>
-<span>            sequence_lists <span class="op">=</span> <span class="va">sequence_lists</span>,</span>
-<span>            reference_dir <span class="op">=</span> <span class="va">reference_dir</span></span>
-<span>          <span class="op">)</span></span>
-<span>        <span class="op">)</span>,</span>
-<span>        <span class="fu"><a href="https://docs.ropensci.org/targets/reference/tar_target.html" class="external-link">tar_target</a></span><span class="op">(</span></span>
-<span>          <span class="va">clade_ref_csv</span>,</span>
-<span>          <span class="fu"><a href="../reference/write_clade_reference_csv.html">write_clade_reference_csv</a></span><span class="op">(</span></span>
-<span>            reference_samples <span class="op">=</span> <span class="va">reference_samples</span>,</span>
-<span>            output_file <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span></span>
-<span>              <span class="va">hybphaser_output_dir</span>,</span>
-<span>              <span class="st">"04_clade_association"</span>,</span>
-<span>              <span class="st">"clade_references_example.csv"</span></span>
-<span>            <span class="op">)</span></span>
-<span>          <span class="op">)</span>,</span>
-<span>          format <span class="op">=</span> <span class="st">"file"</span></span>
-<span>        <span class="op">)</span>,</span>
-<span>        <span class="fu"><a href="https://docs.ropensci.org/targets/reference/tar_target.html" class="external-link">tar_target</a></span><span class="op">(</span></span>
-<span>          <span class="va">phasing_prep_csv</span>,</span>
-<span>          <span class="fu"><a href="../reference/write_phasing_prep_csv.html">write_phasing_prep_csv</a></span><span class="op">(</span></span>
-<span>            reference_samples <span class="op">=</span> <span class="va">reference_samples</span>,</span>
-<span>            output_file <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span></span>
-<span>              <span class="va">hybphaser_output_dir</span>,</span>
-<span>              <span class="st">"05_phasing"</span>,</span>
-<span>              <span class="st">"phasing_prep_example.csv"</span></span>
-<span>            <span class="op">)</span></span>
-<span>          <span class="op">)</span>,</span>
-<span>          format <span class="op">=</span> <span class="st">"file"</span></span>
-<span>        <span class="op">)</span>,</span>
-<span></span>
-<span>        <span class="co"># part 2 clade association ----</span></span>
-<span>        <span class="fu"><a href="https://docs.ropensci.org/targets/reference/tar_target.html" class="external-link">tar_target</a></span><span class="op">(</span></span>
-<span>          <span class="va">mapped_reads</span>,</span>
-<span>          <span class="fu"><a href="../reference/extract_mapped_reads.html">extract_mapped_reads</a></span><span class="op">(</span></span>
-<span>            base_dir <span class="op">=</span> <span class="va">hybphaser_output_dir</span>,</span>
-<span>            output_dir <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">hybphaser_output_dir</span>, <span class="st">"mapped_reads"</span><span class="op">)</span>,</span>
-<span>            namelist <span class="op">=</span> <span class="va">namelist</span>,</span>
-<span>            remove_duplicate_sequences <span class="op">=</span> <span class="cn">FALSE</span></span>
-<span>          <span class="op">)</span></span>
-<span>        <span class="op">)</span>,</span>
-<span>        <span class="fu"><a href="https://docs.ropensci.org/targets/reference/tar_target.html" class="external-link">tar_target</a></span><span class="op">(</span></span>
-<span>          <span class="va">clade_job</span>,</span>
-<span>          <span class="fu"><a href="../reference/run_clade_association.html">run_clade_association</a></span><span class="op">(</span></span>
-<span>            path_to_clade_association_folder <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span></span>
-<span>              <span class="va">hybphaser_output_dir</span>,</span>
-<span>              <span class="st">"04_clade_association"</span></span>
-<span>            <span class="op">)</span>,</span>
-<span>            csv_file_with_clade_reference_names <span class="op">=</span> <span class="va">clade_ref_csv</span>,</span>
-<span>            path_to_reference_sequences <span class="op">=</span> <span class="va">reference_dir</span>,</span>
-<span>            path_to_read_files_cladeassociation <span class="op">=</span> <span class="va">mapped_reads</span><span class="op">$</span><span class="va">output_dir</span>,</span>
-<span>            read_type_cladeassociation <span class="op">=</span> <span class="st">"single-end"</span></span>
-<span>          <span class="op">)</span></span>
-<span>        <span class="op">)</span>,</span>
-<span>        <span class="fu"><a href="https://docs.ropensci.org/targets/reference/tar_target.html" class="external-link">tar_target</a></span><span class="op">(</span></span>
-<span>          <span class="va">clade_table</span>,</span>
-<span>          <span class="fu"><a href="../reference/collate_bbsplit_results.html">collate_bbsplit_results</a></span><span class="op">(</span></span>
-<span>            path_to_clade_association_folder <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span></span>
-<span>              <span class="va">hybphaser_output_dir</span>,</span>
-<span>              <span class="st">"04_clade_association"</span></span>
-<span>            <span class="op">)</span>,</span>
-<span>            csv_file_with_clade_reference_names <span class="op">=</span> <span class="va">clade_ref_csv</span>,</span>
-<span>            path_to_output_folder <span class="op">=</span> <span class="va">hybphaser_output_dir</span></span>
-<span>          <span class="op">)</span></span>
-<span>        <span class="op">)</span>,</span>
-<span></span>
-<span>        <span class="co"># part 3 phasing ----</span></span>
-<span>        <span class="fu"><a href="https://docs.ropensci.org/targets/reference/tar_target.html" class="external-link">tar_target</a></span><span class="op">(</span></span>
-<span>          <span class="va">phasing_job</span>,</span>
-<span>          <span class="fu"><a href="../reference/run_phasing.html">run_phasing</a></span><span class="op">(</span></span>
-<span>            path_to_phasing_folder <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">hybphaser_output_dir</span>, <span class="st">"05_phasing"</span><span class="op">)</span>,</span>
-<span>            csv_file_with_phasing_prep_info <span class="op">=</span> <span class="va">phasing_prep_csv</span>,</span>
-<span>            path_to_read_files_phasing <span class="op">=</span> <span class="va">mapped_reads</span><span class="op">$</span><span class="va">output_dir</span>,</span>
-<span>            read_type_4phasing <span class="op">=</span> <span class="st">"single-end"</span>,</span>
-<span>            reference_sequence_folder <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span></span>
-<span>              <span class="va">hybphaser_output_dir</span>,</span>
-<span>              <span class="st">"03_sequence_lists"</span>,</span>
-<span>              <span class="st">"samples_consensus"</span></span>
-<span>            <span class="op">)</span></span>
-<span>          <span class="op">)</span></span>
-<span>        <span class="op">)</span>,</span>
-<span>        <span class="fu"><a href="https://docs.ropensci.org/targets/reference/tar_target.html" class="external-link">tar_target</a></span><span class="op">(</span></span>
-<span>          <span class="va">phasing_stats</span>,</span>
-<span>          <span class="fu"><a href="../reference/collate_phasing_stats.html">collate_phasing_stats</a></span><span class="op">(</span></span>
-<span>            path_to_phasing_folder <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">hybphaser_output_dir</span>, <span class="st">"05_phasing"</span><span class="op">)</span>,</span>
-<span>            csv_file_with_phasing_prep_info <span class="op">=</span> <span class="va">phasing_prep_csv</span></span>
-<span>          <span class="op">)</span></span>
-<span>        <span class="op">)</span>,</span>
-<span></span>
-<span>        <span class="co"># part 1 repeated on phased data ----</span></span>
-<span>        <span class="fu"><a href="https://docs.ropensci.org/targets/reference/tar_target.html" class="external-link">tar_target</a></span><span class="op">(</span></span>
-<span>          <span class="va">phased_hp_dir</span>,</span>
-<span>          <span class="fu"><a href="../reference/run_phased_hybpiper.html">run_phased_hybpiper</a></span><span class="op">(</span></span>
-<span>            phased_reads_dir <span class="op">=</span> <span class="va">phasing_job</span><span class="op">$</span><span class="va">folder_for_phased_reads</span>,</span>
-<span>            phased_hp_dir <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">hybpiper_dir</span>, <span class="st">"hybpiper_output_phased"</span><span class="op">)</span>,</span>
-<span>            targets_file <span class="op">=</span> <span class="va">targets_file</span>,</span>
-<span>            conda_env <span class="op">=</span> <span class="st">"hybpiper_env"</span>,</span>
-<span>            cpu <span class="op">=</span> <span class="fl">1</span></span>
-<span>          <span class="op">)</span></span>
-<span>        <span class="op">)</span>,</span>
-<span>        <span class="fu"><a href="https://docs.ropensci.org/targets/reference/tar_target.html" class="external-link">tar_target</a></span><span class="op">(</span></span>
-<span>          <span class="va">phased_namelist</span>,</span>
-<span>          <span class="fu"><a href="../reference/make_phased_namelist.html">make_phased_namelist</a></span><span class="op">(</span></span>
-<span>            phased_reads_dir <span class="op">=</span> <span class="va">phasing_job</span><span class="op">$</span><span class="va">folder_for_phased_reads</span>,</span>
-<span>            phased_hp_dir <span class="op">=</span> <span class="va">phased_hp_dir</span></span>
-<span>          <span class="op">)</span></span>
-<span>        <span class="op">)</span>,</span>
-<span>        <span class="fu"><a href="https://docs.ropensci.org/targets/reference/tar_target.html" class="external-link">tar_target</a></span><span class="op">(</span></span>
-<span>          <span class="va">phased_hybphaser_output</span>,</span>
-<span>          <span class="fu"><a href="../reference/run_consensus_sequences.html">run_consensus_sequences</a></span><span class="op">(</span></span>
-<span>            hybpiper_dir <span class="op">=</span> <span class="va">phased_hp_dir</span>,</span>
-<span>            output_dir <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">phased_hp_dir</span>, <span class="st">"hybphaser_output_phased"</span><span class="op">)</span>,</span>
-<span>            namelist <span class="op">=</span> <span class="va">phased_namelist</span>,</span>
-<span>            threads <span class="op">=</span> <span class="fl">1</span></span>
-<span>          <span class="op">)</span></span>
-<span>        <span class="op">)</span>,</span>
-<span>        <span class="fu"><a href="https://docs.ropensci.org/targets/reference/tar_target.html" class="external-link">tar_target</a></span><span class="op">(</span></span>
-<span>          <span class="va">phased_snps</span>,</span>
-<span>          <span class="fu"><a href="../reference/count_snps.html">count_snps</a></span><span class="op">(</span></span>
-<span>            path_to_output_folder <span class="op">=</span> <span class="va">phased_hybphaser_output</span>,</span>
-<span>            fasta_file_with_targets <span class="op">=</span> <span class="va">targets_file</span>,</span>
-<span>            targets_file_format <span class="op">=</span> <span class="st">"DNA"</span>,</span>
-<span>            path_to_namelist <span class="op">=</span> <span class="va">phased_namelist</span></span>
-<span>          <span class="op">)</span></span>
-<span>        <span class="op">)</span>,</span>
-<span>        <span class="fu"><a href="https://docs.ropensci.org/targets/reference/tar_target.html" class="external-link">tar_target</a></span><span class="op">(</span></span>
-<span>          <span class="va">phased_assessment</span>,</span>
-<span>          <span class="fu"><a href="../reference/assess_dataset.html">assess_dataset</a></span><span class="op">(</span></span>
-<span>            snp_table <span class="op">=</span> <span class="va">phased_snps</span><span class="op">$</span><span class="va">tab_snps</span>,</span>
-<span>            length_table <span class="op">=</span> <span class="va">phased_snps</span><span class="op">$</span><span class="va">tab_length</span>,</span>
-<span>            targets_file <span class="op">=</span> <span class="va">targets_file</span>,</span>
-<span>            targets_type <span class="op">=</span> <span class="st">"DNA"</span>,</span>
-<span>            output_dir <span class="op">=</span> <span class="va">phased_hybphaser_output</span>,</span>
-<span>            min_loci_per_sample_prop <span class="op">=</span> <span class="fl">0.5</span>,</span>
-<span>            min_samples_per_locus_prop <span class="op">=</span> <span class="fl">0.5</span></span>
-<span>          <span class="op">)</span></span>
-<span>        <span class="op">)</span>,</span>
-<span>        <span class="fu"><a href="https://docs.ropensci.org/targets/reference/tar_target.html" class="external-link">tar_target</a></span><span class="op">(</span></span>
-<span>          <span class="va">phased_sequence_lists</span>,</span>
-<span>          <span class="fu"><a href="../reference/generate_sequence_lists_after_assessment.html">generate_sequence_lists_after_assessment</a></span><span class="op">(</span></span>
-<span>            assessment <span class="op">=</span> <span class="va">phased_assessment</span>,</span>
-<span>            path_to_output_folder <span class="op">=</span> <span class="va">phased_hybphaser_output</span>,</span>
-<span>            fasta_file_with_targets <span class="op">=</span> <span class="va">targets_file</span>,</span>
-<span>            targets_file_format <span class="op">=</span> <span class="st">"DNA"</span>,</span>
-<span>            path_to_namelist <span class="op">=</span> <span class="va">phased_namelist</span></span>
-<span>          <span class="op">)</span></span>
-<span>        <span class="op">)</span>,</span>
-<span></span>
-<span>        <span class="co"># part 4 merge sequence lists ----</span></span>
-<span>        <span class="fu"><a href="https://docs.ropensci.org/targets/reference/tar_target.html" class="external-link">tar_target</a></span><span class="op">(</span></span>
-<span>          <span class="va">merged_sequence_lists</span>,</span>
-<span>          <span class="op">{</span></span>
-<span>            <span class="co"># enforce that both normal and phased sequence lists are generated</span></span>
-<span>            <span class="va">sequence_lists</span></span>
-<span>            <span class="va">phased_sequence_lists</span></span>
-<span>            <span class="fu"><a href="../reference/merge_sequence_lists.html">merge_sequence_lists</a></span><span class="op">(</span></span>
-<span>              path_to_sequence_lists_normal <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span></span>
-<span>                <span class="va">hybphaser_output_dir</span>,</span>
-<span>                <span class="st">"03_sequence_lists"</span>,</span>
-<span>                <span class="st">"loci_consensus"</span></span>
-<span>              <span class="op">)</span>,</span>
-<span>              path_to_sequence_lists_phased <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span></span>
-<span>                <span class="va">phased_hybphaser_output</span>,</span>
-<span>                <span class="st">"03_sequence_lists"</span>,</span>
-<span>                <span class="st">"loci_consensus"</span></span>
-<span>              <span class="op">)</span>,</span>
-<span>              path_of_sequence_lists_output <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span></span>
-<span>                <span class="va">hybphaser_output_dir</span>,</span>
-<span>                <span class="st">"03_sequence_lists_merged"</span>,</span>
-<span>                <span class="st">"loci_consensus"</span></span>
-<span>              <span class="op">)</span>,</span>
-<span>              path_to_namelist_normal <span class="op">=</span> <span class="va">namelist</span>,</span>
-<span>              path_to_namelist_phased <span class="op">=</span> <span class="va">phased_namelist</span>,</span>
-<span>              exchange_phased_with_not_phased_samples <span class="op">=</span> <span class="st">"yes"</span>,</span>
-<span>              include_phased_seqlists_when_non_phased_locus_absent <span class="op">=</span> <span class="st">"no"</span></span>
-<span>            <span class="op">)</span></span>
-<span>          <span class="op">}</span></span>
-<span>        <span class="op">)</span></span>
+<span>        <span class="va">path</span>,</span>
+<span>        row.names <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span>      <span class="op">)</span></span>
+<span>      <span class="va">path</span></span>
 <span>    <span class="op">}</span>,</span>
-<span>    script <span class="op">=</span> <span class="st">"_targets.R"</span>,</span>
-<span>    ask <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>    format <span class="op">=</span> <span class="st">"file"</span></span>
+<span>  <span class="op">)</span>,</span>
+<span></span>
+<span>  <span class="co">## Part 2: clade association -----------------------------------------</span></span>
+<span>  <span class="fu"><a href="https://docs.ropensci.org/targets/reference/tar_target.html" class="external-link">tar_target</a></span><span class="op">(</span></span>
+<span>    <span class="va">mapped_reads</span>,</span>
+<span>    <span class="fu"><a href="../reference/extract_mapped_reads.html">extract_mapped_reads</a></span><span class="op">(</span></span>
+<span>      base_dir <span class="op">=</span> <span class="va">hybphaser_output_dir</span>,</span>
+<span>      output_dir <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">hybphaser_output_dir</span>, <span class="st">"mapped_reads"</span><span class="op">)</span>,</span>
+<span>      namelist <span class="op">=</span> <span class="va">namelist</span>,</span>
+<span>      remove_duplicate_sequences <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>    <span class="op">)</span></span>
+<span>  <span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://docs.ropensci.org/targets/reference/tar_target.html" class="external-link">tar_target</a></span><span class="op">(</span></span>
+<span>    <span class="va">clade_job</span>,</span>
+<span>    <span class="fu"><a href="../reference/run_clade_association.html">run_clade_association</a></span><span class="op">(</span></span>
+<span>      path_to_clade_association_folder <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span></span>
+<span>        <span class="va">hybphaser_output_dir</span>, <span class="st">"04_clade_association"</span></span>
+<span>      <span class="op">)</span>,</span>
+<span>      csv_file_with_clade_reference_names <span class="op">=</span> <span class="va">clade_ref_csv</span>,</span>
+<span>      path_to_reference_sequences <span class="op">=</span> <span class="va">reference_dir</span>,</span>
+<span>      path_to_read_files_cladeassociation <span class="op">=</span> <span class="va">mapped_reads</span><span class="op">$</span><span class="va">output_dir</span>,</span>
+<span>      read_type_cladeassociation <span class="op">=</span> <span class="st">"single-end"</span></span>
+<span>    <span class="op">)</span></span>
+<span>  <span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://docs.ropensci.org/targets/reference/tar_target.html" class="external-link">tar_target</a></span><span class="op">(</span></span>
+<span>    <span class="va">clade_table</span>,</span>
+<span>    <span class="fu"><a href="../reference/collate_bbsplit_results.html">collate_bbsplit_results</a></span><span class="op">(</span></span>
+<span>      path_to_clade_association_folder <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span></span>
+<span>        <span class="va">hybphaser_output_dir</span>, <span class="st">"04_clade_association"</span></span>
+<span>      <span class="op">)</span>,</span>
+<span>      csv_file_with_clade_reference_names <span class="op">=</span> <span class="va">clade_ref_csv</span>,</span>
+<span>      path_to_output_folder <span class="op">=</span> <span class="va">hybphaser_output_dir</span></span>
+<span>    <span class="op">)</span></span>
+<span>  <span class="op">)</span>,</span>
+<span></span>
+<span>  <span class="co">## Part 3: phasing --------------------------------------------------</span></span>
+<span>  <span class="fu"><a href="https://docs.ropensci.org/targets/reference/tar_target.html" class="external-link">tar_target</a></span><span class="op">(</span></span>
+<span>    <span class="va">phasing_job</span>,</span>
+<span>    <span class="fu"><a href="../reference/run_phasing.html">run_phasing</a></span><span class="op">(</span></span>
+<span>      path_to_phasing_folder <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">hybphaser_output_dir</span>, <span class="st">"05_phasing"</span><span class="op">)</span>,</span>
+<span>      csv_file_with_phasing_prep_info <span class="op">=</span> <span class="va">phasing_prep_csv</span>,</span>
+<span>      path_to_read_files_phasing <span class="op">=</span> <span class="va">mapped_reads</span><span class="op">$</span><span class="va">output_dir</span>,</span>
+<span>      read_type_4phasing <span class="op">=</span> <span class="st">"single-end"</span>,</span>
+<span>      reference_sequence_folder <span class="op">=</span> <span class="va">reference_dir</span></span>
+<span>    <span class="op">)</span></span>
+<span>  <span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://docs.ropensci.org/targets/reference/tar_target.html" class="external-link">tar_target</a></span><span class="op">(</span></span>
+<span>    <span class="va">phasing_stats</span>,</span>
+<span>    <span class="fu"><a href="../reference/collate_phasing_stats.html">collate_phasing_stats</a></span><span class="op">(</span></span>
+<span>      path_to_phasing_folder <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">hybphaser_output_dir</span>, <span class="st">"05_phasing"</span><span class="op">)</span>,</span>
+<span>      csv_file_with_phasing_prep_info <span class="op">=</span> <span class="va">phasing_prep_csv</span></span>
+<span>    <span class="op">)</span></span>
+<span>  <span class="op">)</span>,</span>
+<span></span>
+<span>  <span class="co">## Part 1 again, on the phased reads --------------------------------</span></span>
+<span>  <span class="fu"><a href="https://docs.ropensci.org/targets/reference/tar_target.html" class="external-link">tar_target</a></span><span class="op">(</span></span>
+<span>    <span class="va">phased_hp_dir</span>,</span>
+<span>    <span class="fu"><a href="../reference/run_phased_hybpiper.html">run_phased_hybpiper</a></span><span class="op">(</span></span>
+<span>      phased_reads_dir <span class="op">=</span> <span class="va">phasing_job</span><span class="op">$</span><span class="va">folder_for_phased_reads</span>,</span>
+<span>      phased_hp_dir <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">hybpiper_dir</span>, <span class="st">"hybpiper_output_phased"</span><span class="op">)</span>,</span>
+<span>      targets_file <span class="op">=</span> <span class="va">targets_file</span>,</span>
+<span>      conda_env <span class="op">=</span> <span class="st">"hybpiper_env"</span>,</span>
+<span>      cpu <span class="op">=</span> <span class="fl">2</span></span>
+<span>    <span class="op">)</span></span>
+<span>  <span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://docs.ropensci.org/targets/reference/tar_target.html" class="external-link">tar_target</a></span><span class="op">(</span></span>
+<span>    <span class="va">phased_namelist</span>,</span>
+<span>    <span class="fu"><a href="../reference/make_phased_namelist.html">make_phased_namelist</a></span><span class="op">(</span></span>
+<span>      phased_reads_dir <span class="op">=</span> <span class="va">phasing_job</span><span class="op">$</span><span class="va">folder_for_phased_reads</span>,</span>
+<span>      phased_hp_dir <span class="op">=</span> <span class="va">phased_hp_dir</span></span>
+<span>    <span class="op">)</span></span>
+<span>  <span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://docs.ropensci.org/targets/reference/tar_target.html" class="external-link">tar_target</a></span><span class="op">(</span></span>
+<span>    <span class="va">phased_hybphaser_output</span>,</span>
+<span>    <span class="fu"><a href="../reference/run_consensus_sequences.html">run_consensus_sequences</a></span><span class="op">(</span></span>
+<span>      hybpiper_dir <span class="op">=</span> <span class="va">phased_hp_dir</span>,</span>
+<span>      output_dir <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">phased_hp_dir</span>, <span class="st">"hybphaser_output_phased"</span><span class="op">)</span>,</span>
+<span>      namelist <span class="op">=</span> <span class="va">phased_namelist</span>,</span>
+<span>      threads <span class="op">=</span> <span class="fl">2</span></span>
+<span>    <span class="op">)</span></span>
+<span>  <span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://docs.ropensci.org/targets/reference/tar_target.html" class="external-link">tar_target</a></span><span class="op">(</span></span>
+<span>    <span class="va">phased_snps</span>,</span>
+<span>    <span class="fu"><a href="../reference/count_snps.html">count_snps</a></span><span class="op">(</span></span>
+<span>      path_to_output_folder <span class="op">=</span> <span class="va">phased_hybphaser_output</span>,</span>
+<span>      fasta_file_with_targets <span class="op">=</span> <span class="va">targets_file</span>,</span>
+<span>      targets_file_format <span class="op">=</span> <span class="st">"DNA"</span>,</span>
+<span>      path_to_namelist <span class="op">=</span> <span class="va">phased_namelist</span></span>
+<span>    <span class="op">)</span></span>
+<span>  <span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://docs.ropensci.org/targets/reference/tar_target.html" class="external-link">tar_target</a></span><span class="op">(</span></span>
+<span>    <span class="va">phased_assessment</span>,</span>
+<span>    <span class="fu"><a href="../reference/assess_dataset.html">assess_dataset</a></span><span class="op">(</span></span>
+<span>      snp_table <span class="op">=</span> <span class="va">phased_snps</span><span class="op">$</span><span class="va">tab_snps</span>,</span>
+<span>      length_table <span class="op">=</span> <span class="va">phased_snps</span><span class="op">$</span><span class="va">tab_length</span>,</span>
+<span>      targets_file <span class="op">=</span> <span class="va">targets_file</span>,</span>
+<span>      targets_type <span class="op">=</span> <span class="st">"DNA"</span>,</span>
+<span>      output_dir <span class="op">=</span> <span class="va">phased_hybphaser_output</span>,</span>
+<span>      min_loci_per_sample_prop <span class="op">=</span> <span class="fl">0.5</span>,</span>
+<span>      min_samples_per_locus_prop <span class="op">=</span> <span class="fl">0.5</span></span>
+<span>    <span class="op">)</span></span>
+<span>  <span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://docs.ropensci.org/targets/reference/tar_target.html" class="external-link">tar_target</a></span><span class="op">(</span></span>
+<span>    <span class="va">phased_sequence_lists</span>,</span>
+<span>    <span class="fu"><a href="../reference/generate_sequence_lists_after_assessment.html">generate_sequence_lists_after_assessment</a></span><span class="op">(</span></span>
+<span>      assessment <span class="op">=</span> <span class="va">phased_assessment</span>,</span>
+<span>      path_to_output_folder <span class="op">=</span> <span class="va">phased_hybphaser_output</span>,</span>
+<span>      fasta_file_with_targets <span class="op">=</span> <span class="va">targets_file</span>,</span>
+<span>      targets_file_format <span class="op">=</span> <span class="st">"DNA"</span>,</span>
+<span>      path_to_namelist <span class="op">=</span> <span class="va">phased_namelist</span></span>
+<span>    <span class="op">)</span></span>
+<span>  <span class="op">)</span>,</span>
+<span></span>
+<span>  <span class="co">## Part 4: merge phased + non-phased sequence lists ---------------</span></span>
+<span>  <span class="fu"><a href="https://docs.ropensci.org/targets/reference/tar_target.html" class="external-link">tar_target</a></span><span class="op">(</span></span>
+<span>    <span class="va">merged_sequence_lists</span>,</span>
+<span>    <span class="op">{</span></span>
+<span>      <span class="va">sequence_lists</span>        <span class="co"># force both branches before merging</span></span>
+<span>      <span class="va">phased_sequence_lists</span></span>
+<span>      <span class="fu"><a href="../reference/merge_sequence_lists.html">merge_sequence_lists</a></span><span class="op">(</span></span>
+<span>        path_to_sequence_lists_normal <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span></span>
+<span>          <span class="va">hybphaser_output_dir</span>, <span class="st">"03_sequence_lists"</span>, <span class="st">"loci_consensus"</span></span>
+<span>        <span class="op">)</span>,</span>
+<span>        path_to_sequence_lists_phased <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span></span>
+<span>          <span class="va">phased_hybphaser_output</span>, <span class="st">"03_sequence_lists"</span>, <span class="st">"loci_consensus"</span></span>
+<span>        <span class="op">)</span>,</span>
+<span>        path_of_sequence_lists_output <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span></span>
+<span>          <span class="va">hybphaser_output_dir</span>, <span class="st">"03_sequence_lists_merged"</span>, <span class="st">"loci_consensus"</span></span>
+<span>        <span class="op">)</span>,</span>
+<span>        path_to_namelist_normal <span class="op">=</span> <span class="va">namelist</span>,</span>
+<span>        path_to_namelist_phased <span class="op">=</span> <span class="va">phased_namelist</span>,</span>
+<span>        exchange_phased_with_not_phased_samples <span class="op">=</span> <span class="st">"yes"</span>,</span>
+<span>        include_phased_seqlists_when_non_phased_locus_absent <span class="op">=</span> <span class="st">"no"</span></span>
+<span>      <span class="op">)</span></span>
+<span>    <span class="op">}</span></span>
 <span>  <span class="op">)</span></span>
-<span>  <span class="fu">targets</span><span class="fu">::</span><span class="fu"><a href="https://docs.ropensci.org/targets/reference/tar_make.html" class="external-link">tar_make</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="op">}</span><span class="op">)</span></span></code></pre></div>
+<span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="running-the-pipeline">Running the pipeline<a class="anchor" aria-label="anchor" href="#running-the-pipeline"></a>
+</h2>
+<p>From the project directory:</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">targets</span><span class="fu">::</span><span class="fu"><a href="https://docs.ropensci.org/targets/reference/tar_make.html" class="external-link">tar_make</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<p><code>targets</code> works out the order from the dependencies
+between targets. On a later run it skips any target that is already up
+to date.</p>
+</div>
+<div class="section level2">
+<h2 id="inspecting-the-results">Inspecting the results<a class="anchor" aria-label="anchor" href="#inspecting-the-results"></a>
+</h2>
+<p>Any target can be read back with <code><a href="https://docs.ropensci.org/targets/reference/tar_read.html" class="external-link">tar_read()</a></code>. This
+section is only shown when the pipeline has actually run; the numbers
+below are from the three samples of the HybPiper test dataset.</p>
+<div class="section level3">
+<h3 id="heterozygosity-per-locus">Heterozygosity per locus<a class="anchor" aria-label="anchor" href="#heterozygosity-per-locus"></a>
+</h3>
+<p><code>tar_read(snp_results)$tab_snps</code> is a locus × sample
+matrix of the proportion of polymorphic (ambiguity-coded) sites in each
+consensus sequence. Higher values mean more within-sample allelic
+variation.</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">res</span><span class="op">$</span><span class="va">snp_results</span><span class="op">$</span><span class="va">tab_snps</span>, <span class="fl">4</span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="dataset-summary">Dataset summary<a class="anchor" aria-label="anchor" href="#dataset-summary"></a>
+</h3>
+<p><code>tar_read(dataset_assessment)$summary_table</code> collapses
+that to one row per sample. <code>locus_heterozygosity</code> is the
+percentage of loci carrying any polymorphism and
+<code>allele_divergence</code> is the mean per-site divergence weighted
+by sequence length. Samples elevated on <strong>both</strong> axes are
+the candidates to carry forward to phasing; the useful cut-offs depend
+on the dataset.</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">res</span><span class="op">$</span><span class="va">dataset_assessment</span><span class="op">$</span><span class="va">summary_table</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span>  <span class="st">"sample"</span>, <span class="st">"nloci"</span>, <span class="st">"bpoftarget"</span>, <span class="st">"allele_divergence"</span>, <span class="st">"locus_heterozygosity"</span></span>
+<span><span class="op">)</span><span class="op">]</span></span></code></pre></div>
+<p><code><a href="../reference/assess_dataset.html">assess_dataset()</a></code> also drops loci whose mean SNP
+proportion across samples is an outlier (putative paralogs).
+<code>loci_removed_paralogs_all</code> lists them — empty here because
+nothing crossed the threshold in this small example.</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">res</span><span class="op">$</span><span class="va">dataset_assessment</span><span class="op">$</span><span class="va">loci_removed_paralogs_all</span></span></code></pre></div>
+<p>The same information is written as figures under
+<code>02_assessment/</code>, e.g. locus heterozygosity vs allele
+divergence:</p>
+</div>
+<div class="section level3">
+<h3 id="clade-association">Clade association<a class="anchor" aria-label="anchor" href="#clade-association"></a>
+</h3>
+<p><code>tar_read(clade_table)$table_clade_association</code> gives, per
+sample, the percentage of on-target reads that map unambiguously to each
+clade reference (<code>C1</code>, <code>C2</code>, <code>C3</code> are
+the three samples used as references here). A sample with strong support
+for two or more divergent references is a candidate hybrid; the samples
+below each map mostly to their own reference.</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu">num_cols</span><span class="op">(</span><span class="va">res</span><span class="op">$</span><span class="va">clade_table</span><span class="op">$</span><span class="va">table_clade_association</span><span class="op">)</span>, <span class="fl">1</span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="phasing">Phasing<a class="anchor" aria-label="anchor" href="#phasing"></a>
+</h3>
+<p><code>tar_read(phasing_stats)$table_phasing_stats</code> reports, for
+each phased accession, the proportion of reads assigned to each parental
+reference (here <code>P1</code> and <code>P2</code>). The ratio is
+informative about ploidy: a diploid F1 hybrid is near 1:1, whereas an
+allotetraploid can be closer to 3:1.</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu">num_cols</span><span class="op">(</span><span class="va">res</span><span class="op">$</span><span class="va">phasing_stats</span><span class="op">$</span><span class="va">table_phasing_stats</span><span class="op">)</span>, <span class="fl">3</span><span class="op">)</span></span></code></pre></div>
+<p><code><a href="../reference/run_phasing.html">run_phasing()</a></code> also wrote one read file per haplotype
+(<code>&lt;sample&gt;_to_&lt;ref&gt;.fastq</code>), which the pipeline
+reassembled with HybPiper and fed back through part 1.</p>
+</div>
+<div class="section level3">
+<h3 id="merged-sequence-lists">Merged sequence lists<a class="anchor" aria-label="anchor" href="#merged-sequence-lists"></a>
+</h3>
+<p><code>tar_read(merged_sequence_lists)</code> describes the combined
+per-locus FASTA files, with the phased haplotypes substituted for their
+unphased sample, ready for alignment and phylogenetics.</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">res</span><span class="op">$</span><span class="va">merged_samples</span></span>
+<span><span class="va">res</span><span class="op">$</span><span class="va">n_merged_loci</span></span></code></pre></div>
+</div>
 </div>
 <div class="section level2">
 <h2 id="notes">Notes<a class="anchor" aria-label="anchor" href="#notes"></a>
 </h2>
 <ul>
-<li>By default, this vignette does not execute during package
-checks.</li>
-<li>To run it end-to-end while rendering, set environment variable
-<code>RHYBPHASER_RUN_TARGETS_VIGNETTE=true</code> before knitting.</li>
-<li>The pipeline auto-generates all required input files and does not
-depend on pre-existing files in <code>data/</code>.</li>
+<li>Set <code>RHYBPHASER_RUN_TARGETS_VIGNETTE=true</code> before
+rendering to execute the pipeline; otherwise only the
+<code>_targets.R</code> listing is shown.</li>
+<li>The pipeline requires a <code>hybpiper_env</code> conda environment,
+Docker (with the <code>joelnitta/rhybphaser</code> image), and network
+access for the test data.</li>
 <li>
-<code><a href="../reference/run_consensus_sequences.html">run_consensus_sequences()</a></code> is used instead of
-<code><a href="../reference/run_generate_consensus_sequences.html">run_generate_consensus_sequences()</a></code> because returning a path
-is more natural for <a href="https://docs.ropensci.org/targets/" class="external-link">targets</a> dependency tracking.</li>
-<li>
-<code><a href="../reference/run_phased_hybpiper.html">run_phased_hybpiper()</a></code> and
-<code><a href="../reference/make_phased_namelist.html">make_phased_namelist()</a></code> are exported package functions, so
-no custom helper file is required.</li>
-<li>
-<code><a href="../reference/write_clade_reference_csv.html">write_clade_reference_csv()</a></code> and
-<code><a href="../reference/write_phasing_prep_csv.html">write_phasing_prep_csv()</a></code> are exported helper functions used
-to generate CSV inputs inside the pipeline.</li>
-<li>Docker and conda availability are still required when you actually
-execute the pipeline.</li>
+<code><a href="../reference/run_consensus_sequences.html">run_consensus_sequences()</a></code> is used rather than
+<code><a href="../reference/run_generate_consensus_sequences.html">run_generate_consensus_sequences()</a></code> because it returns the
+output path, which <code>targets</code> tracks naturally. ```</li>
 </ul>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
