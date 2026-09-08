@@ -149,8 +149,11 @@ as shown in
 
 - Original method and code:
   [LarsNauheimer/HybPhaser](https://github.com/LarsNauheimer/HybPhaser)
-- HybPhaser paper: Nauheimer et al.,
-  [bioRxiv](https://www.biorxiv.org/content/10.1101/2020.10.27.354589v2)
+- HybPhaser paper: Nauheimer, L., Weigner, N., Joyce, E., Crayn, D.,
+  Clarke, C., & Nargar, K. (2021). HybPhaser: A workflow for the
+  detection and phasing of hybrids in target capture data sets.
+  *Applications in Plant Sciences*, 9(7), e11441.
+  <https://doi.org/10.1002/aps3.11441>
 - Assembly pipeline: [HybPiper](https://github.com/mossmatters/HybPiper)
 
 ## License

@@ -1,11 +1,12 @@
 # rhybphaser: Phasing of Sequence Reads for Polyploid Hybrids from Target Capture Data
 
-An R implementation of the HybPhaser method by Nauheimer et al.
-(original code at <https://github.com/LarsNauheimer/HybPhaser>).
-HybPhaser detects hybrids by measuring heterozygosity in target capture
-datasets and phases hybrid accessions by separating reads according to
-similarity with selected taxa that represent parental clades. It is
-designed as an extension to the HybPiper assembly pipeline.
+An R implementation of the HybPhaser method by Nauheimer et al. (2021)
+[doi:10.1002/aps3.11441](https://doi.org/10.1002/aps3.11441) (original
+code at <https://github.com/LarsNauheimer/HybPhaser>). HybPhaser detects
+hybrids by measuring heterozygosity in target capture datasets and
+phases hybrid accessions by separating reads according to similarity
+with selected taxa that represent parental clades. It is designed as an
+extension to the HybPiper assembly pipeline.
 
 ## See also
 

@@ -424,5 +424,5 @@ updates.
 - Report issues: <https://github.com/joelnitta/rhybphaser/issues>
 - Original HybPhaser method and code:
   <https://github.com/LarsNauheimer/HybPhaser>
-- Original HybPhaser paper: [bioRxiv
-  preprint](https://www.biorxiv.org/content/10.1101/2020.10.27.354589v2)
+- Original HybPhaser paper: Nauheimer et al. (2021), *Applications in
+  Plant Sciences* 9(7): e11441, <https://doi.org/10.1002/aps3.11441>

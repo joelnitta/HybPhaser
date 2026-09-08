@@ -231,8 +231,8 @@ The image is built and pushed to Docker Hub by
 - [rhybphaser GitHub](https://github.com/joelnitta/rhybphaser)
 - [Original HybPhaser method and
   code](https://github.com/LarsNauheimer/HybPhaser)
-- [HybPhaser
-  Manuscript](https://www.biorxiv.org/content/10.1101/%5C%202020.10.27.354589v2)
+- [HybPhaser paper (Nauheimer et al. 2021, *Appl. Plant Sci.*
+  9:e11441)](https://doi.org/10.1002/aps3.11441)
 - [HybPiper Documentation](https://github.com/mossmatters/HybPiper/wiki)
 
 ## Support
