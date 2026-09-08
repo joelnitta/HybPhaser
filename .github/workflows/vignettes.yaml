@@ -86,10 +86,14 @@ jobs:
 
       - name: Create hybpiper_env
         shell: bash -el {0}
-        # HybPiper 2.3.4 does not work with SPAdes 4.x (it leaves no
-        # <gene>_spades directory, so rerun_spades() crashes). Pin < 4.
+        # conda-forge must have channel priority over bioconda (the
+        # bioconda-recommended order); otherwise GNU `parallel` resolves to a
+        # mis-packaged build with a relative Perl @INC and every SPAdes job
+        # fails ("Can't locate IPC/Open3.pm"), which then crashes HybPiper's
+        # rerun_spades() on the missing <gene>_spades directory.
+        # HybPiper 2.3.4 also does not work with SPAdes 4.x; pin < 4.
         run: >-
-          mamba create -n hybpiper_env -c bioconda -c conda-forge -y
+          mamba create -n hybpiper_env -c conda-forge -c bioconda -y
           "python<3.13" "spades<4" hybpiper parallel perl
 
       - name: Pull rhybphaser Docker image

@@ -44,9 +44,11 @@ jobs:
 
       - name: Create hybpiper_env
         shell: bash -el {0}
-        # HybPiper 2.3.4 does not work with SPAdes 4.x; pin < 4.
+        # conda-forge must have channel priority over bioconda, else GNU
+        # `parallel` resolves to a broken build (relative Perl @INC) and every
+        # SPAdes job fails. HybPiper 2.3.4 also needs SPAdes < 4.
         run: >-
-          mamba create -n hybpiper_env -c bioconda -c conda-forge -y
+          mamba create -n hybpiper_env -c conda-forge -c bioconda -y
           "python<3.13" "spades<4" hybpiper parallel perl
 
       - name: Pull rhybphaser Docker image
