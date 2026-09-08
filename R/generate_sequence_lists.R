@@ -543,8 +543,8 @@ generate_locus_lists <- function(
         )
 
         # Generate output files
-        file.create(output_file_consensus, overwrite = TRUE)
-        file.create(output_file_contigs, overwrite = TRUE)
+        file.create(output_file_consensus)
+        file.create(output_file_contigs)
 
         # Append sample fastas to the empty output file
         file.append(output_file_consensus, consensus_files)
@@ -591,8 +591,8 @@ generate_locus_lists <- function(
         )
 
         # Generate output files
-        file.create(output_file_consensus, overwrite = TRUE)
-        file.create(output_file_contigs, overwrite = TRUE)
+        file.create(output_file_consensus)
+        file.create(output_file_contigs)
 
         # Append sample fastas to the empty output file
         file.append(output_file_consensus, consensus_files)
@@ -959,8 +959,8 @@ generate_sample_lists <- function(
         )
 
         # Create output files
-        file.create(output_file_consensus_samples, overwrite = TRUE)
-        file.create(output_file_contigs_samples, overwrite = TRUE)
+        file.create(output_file_consensus_samples)
+        file.create(output_file_contigs_samples)
 
         # Append fasta files to empty output file
         file.append(output_file_consensus_samples, consensus_files_samples)
@@ -1001,8 +1001,8 @@ generate_sample_lists <- function(
         )
 
         # Create output files
-        file.create(output_file_consensus_samples, overwrite = TRUE)
-        file.create(output_file_contigs_samples, overwrite = TRUE)
+        file.create(output_file_consensus_samples)
+        file.create(output_file_contigs_samples)
 
         # Append fasta files to empty output file
         file.append(output_file_consensus_samples, consensus_files_samples)
