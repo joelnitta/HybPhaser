@@ -35,6 +35,17 @@ exported_calls_with_bad_args <- function(code) {
   exported <- getNamespaceExports("rhybphaser")
   problems <- character()
 
+  # TRUE for the empty argument, e.g. the row index in `x[, cols]`
+  is_empty_arg <- function(x) {
+    tryCatch(
+      {
+        force(x)
+        FALSE
+      },
+      error = function(e) TRUE
+    )
+  }
+
   walk <- function(e) {
     if (is.call(e)) {
       fn <- e[[1]]
@@ -53,8 +64,10 @@ exported_calls_with_bad_args <- function(code) {
           }
         }
       }
-      for (part in as.list(e)) {
-        walk(part)
+      for (i in seq_along(e)) {
+        if (!is_empty_arg(e[[i]])) {
+          walk(e[[i]])
+        }
       }
     }
   }
