@@ -25,6 +25,12 @@ if (has_docker) {
     pull = FALSE
   )
 }
+
+# The end-to-end workflow below needs conda, HybPiper, Docker and network
+# access, so it does not run during package checks or when building the
+# site. Set RHYBPHASER_RUN_VIGNETTE=true to execute it (the vignettes.yaml
+# workflow does this).
+run_full_vignette <- identical(Sys.getenv("RHYBPHASER_RUN_VIGNETTE"), "true")
 ```
 
 ## Introduction
@@ -89,7 +95,7 @@ If HybPiper is installed in a conda environment (default name:
 `hybpiper_env`), you can download and run the official test dataset and
 continue directly with HybPhaser:
 
-```{r eval=FALSE, echo=TRUE}
+```{r eval=run_full_vignette, echo=TRUE}
 # 0. Optional checks
 check_conda()
 check_hybpiper_conda("hybpiper_env")

@@ -1,0 +1,108 @@
+name: vignettes.yaml
+
+# Runs the vignettes end-to-end (they are eval = FALSE during R CMD check
+# because they need conda + HybPiper + Docker + network). Only fires when
+# code that the vignettes exercise has changed, plus a manual trigger.
+
+on:
+  push:
+    branches: [main]
+    paths: &code_paths
+      - "R/**"
+      - "inst/**"
+      - "vignettes/**"
+      - "NAMESPACE"
+      - "DESCRIPTION"
+      - "Dockerfile"
+      - "environment.yml"
+      - ".github/workflows/vignettes.yaml"
+  pull_request:
+    paths: *code_paths
+  workflow_dispatch:
+    inputs:
+      vignette:
+        description: Which vignette(s) to run
+        type: choice
+        default: both
+        options:
+          - both
+          - rhybphaser
+          - rhybphaser_targets
+
+permissions: read-all
+
+concurrency:
+  group: vignettes-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  select:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.pick.outputs.matrix }}
+    steps:
+      - id: pick
+        env:
+          CHOICE: ${{ github.event_name == 'workflow_dispatch' && inputs.vignette || 'both' }}
+        run: |
+          case "$CHOICE" in
+            rhybphaser)         echo 'matrix=["rhybphaser"]' >> "$GITHUB_OUTPUT" ;;
+            rhybphaser_targets) echo 'matrix=["rhybphaser_targets"]' >> "$GITHUB_OUTPUT" ;;
+            *)                  echo 'matrix=["rhybphaser","rhybphaser_targets"]' >> "$GITHUB_OUTPUT" ;;
+          esac
+
+  run:
+    needs: select
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        vignette: ${{ fromJSON(needs.select.outputs.matrix) }}
+    name: ${{ matrix.vignette }}
+    env:
+      VIG: ${{ matrix.vignette }}
+      RHYBPHASER_RUN_VIGNETTE: ${{ matrix.vignette == 'rhybphaser' && 'true' || '' }}
+      RHYBPHASER_RUN_TARGETS_VIGNETTE: ${{ matrix.vignette == 'rhybphaser_targets' && 'true' || '' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: r-lib/actions/setup-pandoc@v2
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: >-
+            any::rmarkdown, any::knitr, any::targets, any::tarchetypes,
+            local::.
+
+      - name: Set up conda
+        uses: conda-incubator/setup-miniconda@v3
+        with:
+          miniforge-version: latest
+          use-mamba: true
+
+      - name: Create hybpiper_env
+        shell: bash -el {0}
+        run: mamba create -n hybpiper_env -c bioconda -c conda-forge -y hybpiper
+
+      - name: Pull rhybphaser Docker image
+        run: docker pull joelnitta/rhybphaser:latest
+
+      - name: Render vignette
+        shell: bash -el {0}
+        run: |
+          mkdir -p rendered
+          Rscript -e 'rmarkdown::render(
+            sprintf("vignettes/%s.Rmd", Sys.getenv("VIG")),
+            output_dir = "rendered"
+          )'
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: vignette-${{ matrix.vignette }}
+          path: rendered/
+          retention-days: 14
