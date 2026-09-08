@@ -305,6 +305,25 @@ for the three samples of the HybPiper test dataset.
 proportion of polymorphic (ambiguity-coded) sites in each consensus
 sequence. Higher values mean more within-sample allelic variation.
 
+``` r
+
+round(res$snp_results$tab_snps, 4)
+#>           EG30   EG98   MWL2
+#> gene001 0.0000 0.0092 0.0069
+#> gene002 0.0018 0.0763 0.0907
+#> gene006 0.0000 0.0654 0.0750
+#> gene012 0.0000 0.0043 0.0000
+#> gene026 0.0433 0.0710 0.0644
+#> gene030 0.0112 0.0482 0.0658
+#> gene074 0.0044 0.0110 0.0007
+#> gene079 0.0043 0.0102 0.0079
+#> gene111 0.0015 0.0885 0.0044
+#> gene293 0.0000 0.0704 0.0704
+#> gene298 0.0371 0.0236 0.0279
+#> gene461 0.0131 0.0033 0.0000
+#> gene660 0.0025 0.0000 0.0025
+```
+
 ### Dataset summary
 
 `tar_read(dataset_assessment)$summary_table` collapses that to one row
@@ -314,14 +333,36 @@ weighted by sequence length. Samples elevated on **both** axes are the
 candidates to carry forward to phasing; the useful cut-offs depend on
 the dataset.
 
+``` r
+
+res$dataset_assessment$summary_table[, c(
+  "sample", "nloci", "bpoftarget", "allele_divergence", "locus_heterozygosity"
+)]
+#>   sample nloci bpoftarget allele_divergence locus_heterozygosity
+#> 1   EG30    13       98.3             1.115                69.23
+#> 2   EG98    13       92.4             3.704                92.31
+#> 3   MWL2    13       92.3             3.093                84.62
+```
+
 [`assess_dataset()`](https://joelnitta.github.io/rhybphaser/reference/assess_dataset.md)
 also drops loci whose mean SNP proportion across samples is an outlier
 (putative paralogs). `loci_removed_paralogs_all` lists them — empty here
 because nothing crossed the threshold in this small example.
 
+``` r
+
+res$dataset_assessment$loci_removed_paralogs_all
+#> character(0)
+```
+
 [`assess_dataset()`](https://joelnitta.github.io/rhybphaser/reference/assess_dataset.md)
 also writes this as a plot (`02_assessment/3_LH_vs_AD.png`); the same
 view of the summary table:
+
+![Locus heterozygosity versus allele divergence, one point per
+sample](rhybphaser_targets-fig-results-fig-1.png)
+
+plot of chunk results-fig
 
 ### Clade association
 
@@ -332,12 +373,28 @@ here). A sample with strong support for two or more divergent references
 is a candidate hybrid; the samples below each map mostly to their own
 reference.
 
+``` r
+
+round(num_cols(res$clade_table$table_clade_association), 1)
+#>        C1   C2   C3
+#> EG30 72.6  1.1  0.2
+#> EG98  1.3 54.8  9.4
+#> MWL2  1.6  2.2 58.2
+```
+
 ### Phasing
 
 `tar_read(phasing_stats)$table_phasing_stats` reports, for each phased
 accession, the proportion of reads assigned to each parental reference
 (here `P1` and `P2`). The ratio is informative about ploidy: a diploid
 F1 hybrid is near 1:1, whereas an allotetraploid can be closer to 3:1.
+
+``` r
+
+round(num_cols(res$phasing_stats$table_phasing_stats), 3)
+#>         P1    P2
+#> EG30 0.232 0.154
+```
 
 [`run_phasing()`](https://joelnitta.github.io/rhybphaser/reference/run_phasing.md)
 also wrote one read file per haplotype (`<sample>_to_<ref>.fastq`),
@@ -349,6 +406,14 @@ which the pipeline reassembled with HybPiper and fed back through part
 `tar_read(merged_sequence_lists)` describes the combined per-locus FASTA
 files, with the phased haplotypes substituted for their unphased sample,
 ready for alignment and phylogenetics.
+
+``` r
+
+res$merged_samples
+#> [1] "EG98"       "MWL2"       "EG30_to_P1" "EG30_to_P2"
+res$n_merged_loci
+#> [1] 13
+```
 
 ## Notes
 

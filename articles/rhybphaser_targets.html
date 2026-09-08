@@ -372,6 +372,22 @@ three samples of the HybPiper test dataset.</p>
 matrix of the proportion of polymorphic (ambiguity-coded) sites in each
 consensus sequence. Higher values mean more within-sample allelic
 variation.</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">res</span><span class="op">$</span><span class="va">snp_results</span><span class="op">$</span><span class="va">tab_snps</span>, <span class="fl">4</span><span class="op">)</span></span>
+<span><span class="co">#&gt;           EG30   EG98   MWL2</span></span>
+<span><span class="co">#&gt; gene001 0.0000 0.0092 0.0069</span></span>
+<span><span class="co">#&gt; gene002 0.0018 0.0763 0.0907</span></span>
+<span><span class="co">#&gt; gene006 0.0000 0.0654 0.0750</span></span>
+<span><span class="co">#&gt; gene012 0.0000 0.0043 0.0000</span></span>
+<span><span class="co">#&gt; gene026 0.0433 0.0710 0.0644</span></span>
+<span><span class="co">#&gt; gene030 0.0112 0.0482 0.0658</span></span>
+<span><span class="co">#&gt; gene074 0.0044 0.0110 0.0007</span></span>
+<span><span class="co">#&gt; gene079 0.0043 0.0102 0.0079</span></span>
+<span><span class="co">#&gt; gene111 0.0015 0.0885 0.0044</span></span>
+<span><span class="co">#&gt; gene293 0.0000 0.0704 0.0704</span></span>
+<span><span class="co">#&gt; gene298 0.0371 0.0236 0.0279</span></span>
+<span><span class="co">#&gt; gene461 0.0131 0.0033 0.0000</span></span>
+<span><span class="co">#&gt; gene660 0.0025 0.0000 0.0025</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="dataset-summary">Dataset summary<a class="anchor" aria-label="anchor" href="#dataset-summary"></a>
@@ -383,13 +399,29 @@ percentage of loci carrying any polymorphism and
 by sequence length. Samples elevated on <strong>both</strong> axes are
 the candidates to carry forward to phasing; the useful cut-offs depend
 on the dataset.</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">res</span><span class="op">$</span><span class="va">dataset_assessment</span><span class="op">$</span><span class="va">summary_table</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span>  <span class="st">"sample"</span>, <span class="st">"nloci"</span>, <span class="st">"bpoftarget"</span>, <span class="st">"allele_divergence"</span>, <span class="st">"locus_heterozygosity"</span></span>
+<span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="co">#&gt;   sample nloci bpoftarget allele_divergence locus_heterozygosity</span></span>
+<span><span class="co">#&gt; 1   EG30    13       98.3             1.115                69.23</span></span>
+<span><span class="co">#&gt; 2   EG98    13       92.4             3.704                92.31</span></span>
+<span><span class="co">#&gt; 3   MWL2    13       92.3             3.093                84.62</span></span></code></pre></div>
 <p><code><a href="../reference/assess_dataset.html">assess_dataset()</a></code> also drops loci whose mean SNP
 proportion across samples is an outlier (putative paralogs).
 <code>loci_removed_paralogs_all</code> lists them — empty here because
 nothing crossed the threshold in this small example.</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">res</span><span class="op">$</span><span class="va">dataset_assessment</span><span class="op">$</span><span class="va">loci_removed_paralogs_all</span></span>
+<span><span class="co">#&gt; character(0)</span></span></code></pre></div>
 <p><code><a href="../reference/assess_dataset.html">assess_dataset()</a></code> also writes this as a plot
 (<code>02_assessment/3_LH_vs_AD.png</code>); the same view of the
 summary table:</p>
+<div class="figure">
+<img src="rhybphaser_targets-fig-results-fig-1.png" alt="Locus heterozygosity versus allele divergence, one point per sample" width="70%"><p class="caption">
+plot of chunk results-fig
+</p>
+</div>
 </div>
 <div class="section level3">
 <h3 id="clade-association">Clade association<a class="anchor" aria-label="anchor" href="#clade-association"></a>
@@ -400,6 +432,12 @@ clade reference (<code>C1</code>, <code>C2</code>, <code>C3</code> are
 the three samples used as references here). A sample with strong support
 for two or more divergent references is a candidate hybrid; the samples
 below each map mostly to their own reference.</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu">num_cols</span><span class="op">(</span><span class="va">res</span><span class="op">$</span><span class="va">clade_table</span><span class="op">$</span><span class="va">table_clade_association</span><span class="op">)</span>, <span class="fl">1</span><span class="op">)</span></span>
+<span><span class="co">#&gt;        C1   C2   C3</span></span>
+<span><span class="co">#&gt; EG30 72.6  1.1  0.2</span></span>
+<span><span class="co">#&gt; EG98  1.3 54.8  9.4</span></span>
+<span><span class="co">#&gt; MWL2  1.6  2.2 58.2</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="phasing">Phasing<a class="anchor" aria-label="anchor" href="#phasing"></a>
@@ -409,6 +447,10 @@ each phased accession, the proportion of reads assigned to each parental
 reference (here <code>P1</code> and <code>P2</code>). The ratio is
 informative about ploidy: a diploid F1 hybrid is near 1:1, whereas an
 allotetraploid can be closer to 3:1.</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu">num_cols</span><span class="op">(</span><span class="va">res</span><span class="op">$</span><span class="va">phasing_stats</span><span class="op">$</span><span class="va">table_phasing_stats</span><span class="op">)</span>, <span class="fl">3</span><span class="op">)</span></span>
+<span><span class="co">#&gt;         P1    P2</span></span>
+<span><span class="co">#&gt; EG30 0.232 0.154</span></span></code></pre></div>
 <p><code><a href="../reference/run_phasing.html">run_phasing()</a></code> also wrote one read file per haplotype
 (<code>&lt;sample&gt;_to_&lt;ref&gt;.fastq</code>), which the pipeline
 reassembled with HybPiper and fed back through part 1.</p>
@@ -419,6 +461,11 @@ reassembled with HybPiper and fed back through part 1.</p>
 <p><code>tar_read(merged_sequence_lists)</code> describes the combined
 per-locus FASTA files, with the phased haplotypes substituted for their
 unphased sample, ready for alignment and phylogenetics.</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">res</span><span class="op">$</span><span class="va">merged_samples</span></span>
+<span><span class="co">#&gt; [1] "EG98"       "MWL2"       "EG30_to_P1" "EG30_to_P2"</span></span>
+<span><span class="va">res</span><span class="op">$</span><span class="va">n_merged_loci</span></span>
+<span><span class="co">#&gt; [1] 13</span></span></code></pre></div>
 </div>
 </div>
 <div class="section level2">
