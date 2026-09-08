@@ -169,12 +169,20 @@ test_that("create_test_dataset creates complete test data", {
 })
 
 test_that("create_real_test_dataset creates valid structure", {
+  skip_on_cran()
+  skip_if_offline("raw.githubusercontent.com")
+
   test_base <- tempfile()
 
-  test_data <- create_real_test_dataset(
-    test_base,
-    samples = NULL, # Use default HybPiper samples
-    n_genes = 3
+  test_data <- tryCatch(
+    create_real_test_dataset(
+      test_base,
+      samples = NULL, # Use default HybPiper samples
+      n_genes = 3
+    ),
+    error = function(e) {
+      skip(paste("could not download HybPiper test data:", conditionMessage(e)))
+    }
   )
 
   expect_type(test_data, "list")
