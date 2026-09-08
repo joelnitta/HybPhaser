@@ -3,6 +3,7 @@
 ^\.git$
 ^\.gitignore$
 ^\.dockerignore$
+^\.prompts$
 ^Dockerfile$
 ^docker-compose\.yml$
 ^DOCKER\.md$

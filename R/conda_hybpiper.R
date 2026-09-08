@@ -291,6 +291,448 @@ hybpiper_assemble <- function(
 }
 
 
+.read_fasta_records <- function(path) {
+  lines <- readLines(path, warn = FALSE)
+
+  if (length(lines) == 0) {
+    return(data.frame(id = character(0), sequence = character(0)))
+  }
+
+  record_ids <- character(0)
+  record_sequences <- character(0)
+  current_id <- NULL
+  current_sequence <- character(0)
+
+  for (line in lines) {
+    if (startsWith(line, ">")) {
+      if (!is.null(current_id)) {
+        record_ids <- c(record_ids, current_id)
+        record_sequences <- c(
+          record_sequences,
+          paste0(current_sequence, collapse = "")
+        )
+      }
+
+      current_id <- strsplit(sub("^>", "", line), "\\s+")[[1]][1]
+      current_sequence <- character(0)
+    } else {
+      current_sequence <- c(current_sequence, trimws(line))
+    }
+  }
+
+  if (!is.null(current_id)) {
+    record_ids <- c(record_ids, current_id)
+    record_sequences <- c(
+      record_sequences,
+      paste0(current_sequence, collapse = "")
+    )
+  }
+
+  data.frame(
+    id = record_ids,
+    sequence = record_sequences,
+    stringsAsFactors = FALSE
+  )
+}
+
+
+.sequence_length_without_ns <- function(sequence) {
+  nchar(gsub("[Nn[:space:]]", "", sequence))
+}
+
+
+.count_nonempty_lines <- function(path) {
+  if (!file.exists(path)) {
+    return(0L)
+  }
+
+  lines <- trimws(readLines(path, warn = FALSE))
+  sum(nzchar(lines))
+}
+
+
+.discover_supercontig_genes <- function(sample_names, wd) {
+  genes <- character(0)
+
+  for (sample_name in sample_names) {
+    sample_dir <- file.path(wd, sample_name)
+    if (!dir.exists(sample_dir)) {
+      next
+    }
+
+    sample_files <- list.files(
+      sample_dir,
+      pattern = "_supercontig\\.fasta$",
+      recursive = TRUE,
+      full.names = TRUE
+    )
+
+    if (length(sample_files) == 0) {
+      next
+    }
+
+    genes <- c(
+      genes,
+      sub("_supercontig\\.fasta$", "", basename(sample_files))
+    )
+  }
+
+  sort(unique(genes))
+}
+
+
+.parse_target_gene_name <- function(record_id, known_genes = character(0)) {
+  if (length(known_genes) > 0) {
+    separators <- c("_", "-")
+    matches <- known_genes[
+      vapply(
+        known_genes,
+        function(gene_name) {
+          if (identical(record_id, gene_name)) {
+            return(TRUE)
+          }
+
+          any(vapply(
+            separators,
+            function(separator) {
+              startsWith(record_id, paste0(gene_name, separator)) ||
+                endsWith(record_id, paste0(separator, gene_name))
+            },
+            logical(1)
+          ))
+        },
+        logical(1)
+      )
+    ]
+
+    if (length(matches) > 0) {
+      return(matches[which.max(nchar(matches))])
+    }
+  }
+
+  if (grepl("-", record_id, fixed = TRUE)) {
+    return(sub(".*-", "", record_id))
+  }
+
+  if (grepl("_", record_id, fixed = TRUE)) {
+    return(sub("_[^_]+$", "", record_id))
+  }
+
+  record_id
+}
+
+
+.read_target_mean_lengths <- function(
+  targets_file,
+  dna = TRUE,
+  known_genes = character(0)
+) {
+  records <- .read_fasta_records(targets_file)
+
+  reference_lengths <- list()
+
+  for (index in seq_len(nrow(records))) {
+    gene_name <- .parse_target_gene_name(
+      records$id[[index]],
+      known_genes = known_genes
+    )
+    record_length <- .sequence_length_without_ns(records$sequence[[index]])
+
+    if (!isTRUE(dna)) {
+      record_length <- record_length * 3L
+    }
+
+    reference_lengths[[gene_name]] <- c(
+      reference_lengths[[gene_name]],
+      record_length
+    )
+  }
+
+  if (length(reference_lengths) == 0) {
+    return(setNames(integer(0), character(0)))
+  }
+
+  mean_lengths <- vapply(
+    reference_lengths,
+    function(lengths) as.integer(round(mean(lengths))),
+    integer(1)
+  )
+  mean_lengths[order(names(mean_lengths))]
+}
+
+
+.collect_supercontig_sample_stats <- function(sample_name, wd, gene_names) {
+  sample_dir <- file.path(wd, sample_name)
+  seq_lengths <- stats::setNames(integer(length(gene_names)), gene_names)
+
+  if (!dir.exists(sample_dir)) {
+    warning("Sample directory not found: ", sample_dir, call. = FALSE)
+    return(list(
+      seq_lengths = seq_lengths,
+      total_bases = 0L,
+      genes_mapped = 0L,
+      genes_with_contigs = 0L,
+      genes_with_seqs = 0L,
+      paralog_warnings_long = 0L,
+      paralog_warnings_depth = 0L,
+      genes_without_stitched_contigs = 0L,
+      genes_with_stitched_contigs = 0L,
+      genes_with_stitched_contigs_skipped = 0L,
+      genes_with_chimera_warning = 0L
+    ))
+  }
+
+  supercontig_files <- list.files(
+    sample_dir,
+    pattern = "_supercontig\\.fasta$",
+    recursive = TRUE,
+    full.names = TRUE
+  )
+
+  for (supercontig_file in supercontig_files) {
+    gene_name <- sub("_supercontig\\.fasta$", "", basename(supercontig_file))
+    if (!gene_name %in% names(seq_lengths)) {
+      seq_lengths[gene_name] <- 0L
+    }
+
+    records <- .read_fasta_records(supercontig_file)
+    if (nrow(records) == 0) {
+      next
+    }
+
+    seq_lengths[gene_name] <- sum(vapply(
+      records$sequence,
+      .sequence_length_without_ns,
+      integer(1)
+    ))
+  }
+
+  genes_with_seqs <- sum(seq_lengths > 0)
+
+  genes_mapped <- .count_nonempty_lines(file.path(
+    sample_dir,
+    paste0(sample_name, "_genes_with_mapped_reads.txt")
+  ))
+  if (genes_mapped == 0L) {
+    genes_mapped <- genes_with_seqs
+  }
+
+  genes_with_contigs <- .count_nonempty_lines(file.path(
+    sample_dir,
+    paste0(sample_name, "_genes_with_contigs.txt")
+  ))
+  if (genes_with_contigs == 0L) {
+    genes_with_contigs <- genes_with_seqs
+  }
+
+  paralog_warnings_long <- .count_nonempty_lines(file.path(
+    sample_dir,
+    paste0(sample_name, "_genes_with_long_paralog_warnings.txt")
+  ))
+  paralog_warnings_depth <- .count_nonempty_lines(file.path(
+    sample_dir,
+    paste0(sample_name, "_genes_with_paralog_warnings_by_contig_depth.csv")
+  ))
+
+  stitched_contig_file <- file.path(
+    sample_dir,
+    paste0(sample_name, "_genes_with_stitched_contig.csv")
+  )
+  genes_without_stitched_contigs <- 0L
+  genes_with_stitched_contigs <- 0L
+  genes_with_stitched_contigs_skipped <- 0L
+
+  if (file.exists(stitched_contig_file)) {
+    stitched_stats <- readLines(stitched_contig_file, warn = FALSE)
+    for (line in stitched_stats) {
+      parts <- strsplit(line, ",", fixed = TRUE)[[1]]
+      if (length(parts) < 3) {
+        next
+      }
+
+      stat <- trimws(parts[[3]])
+      if (grepl("single Exonerate hit", stat, fixed = TRUE)) {
+        genes_without_stitched_contigs <- genes_without_stitched_contigs + 1L
+      } else if (grepl("Stitched contig produced", stat, fixed = TRUE)) {
+        genes_with_stitched_contigs <- genes_with_stitched_contigs + 1L
+      } else if (grepl("Stitched contig step skipped", stat, fixed = TRUE)) {
+        genes_with_stitched_contigs_skipped <- genes_with_stitched_contigs_skipped +
+          1L
+      }
+    }
+  } else {
+    genes_with_stitched_contigs <- genes_with_seqs
+  }
+
+  chimera_file <- file.path(
+    sample_dir,
+    paste0(
+      sample_name,
+      "_genes_derived_from_putative_chimeric_stitched_contig.csv"
+    )
+  )
+  genes_with_chimera_warning <- 0L
+  if (file.exists(chimera_file)) {
+    chimera_stats <- readLines(chimera_file, warn = FALSE)
+    for (line in chimera_stats) {
+      parts <- strsplit(line, ",", fixed = TRUE)[[1]]
+      if (length(parts) < 3) {
+        next
+      }
+
+      if (
+        grepl("Chimera WARNING for stitched_contig.", parts[[3]], fixed = TRUE)
+      ) {
+        genes_with_chimera_warning <- genes_with_chimera_warning + 1L
+      }
+    }
+  }
+
+  list(
+    seq_lengths = seq_lengths,
+    total_bases = sum(seq_lengths),
+    genes_mapped = genes_mapped,
+    genes_with_contigs = genes_with_contigs,
+    genes_with_seqs = genes_with_seqs,
+    paralog_warnings_long = paralog_warnings_long,
+    paralog_warnings_depth = paralog_warnings_depth,
+    genes_without_stitched_contigs = genes_without_stitched_contigs,
+    genes_with_stitched_contigs = genes_with_stitched_contigs,
+    genes_with_stitched_contigs_skipped = genes_with_stitched_contigs_skipped,
+    genes_with_chimera_warning = genes_with_chimera_warning
+  )
+}
+
+
+.compute_recovery_thresholds <- function(seq_lengths, mean_lengths) {
+  valid_genes <- mean_lengths > 0
+
+  c(
+    GenesAt25pct = sum(valid_genes & seq_lengths > mean_lengths * 0.25),
+    GenesAt50pct = sum(valid_genes & seq_lengths > mean_lengths * 0.50),
+    GenesAt75pct = sum(valid_genes & seq_lengths > mean_lengths * 0.75),
+    GenesAt150pct = sum(valid_genes & seq_lengths > mean_lengths * 1.50)
+  )
+}
+
+
+.run_supercontig_stats_native <- function(
+  targets_file,
+  namelist,
+  wd,
+  dna,
+  seq_lengths_filename,
+  stats_filename
+) {
+  sample_names <- trimws(readLines(namelist, warn = FALSE))
+  sample_names <- sample_names[nzchar(sample_names)]
+
+  discovered_genes <- .discover_supercontig_genes(sample_names, wd)
+  mean_lengths <- .read_target_mean_lengths(
+    targets_file,
+    dna = dna,
+    known_genes = discovered_genes
+  )
+
+  gene_names <- sort(unique(c(names(mean_lengths), discovered_genes)))
+  sample_stats <- stats::setNames(
+    vector("list", length(sample_names)),
+    sample_names
+  )
+
+  for (sample_name in sample_names) {
+    sample_stats[[sample_name]] <- .collect_supercontig_sample_stats(
+      sample_name = sample_name,
+      wd = wd,
+      gene_names = gene_names
+    )
+  }
+
+  if (length(gene_names) > 0) {
+    for (gene_name in setdiff(gene_names, names(mean_lengths))) {
+      observed_lengths <- vapply(
+        sample_stats,
+        function(sample_stat) sample_stat$seq_lengths[[gene_name]],
+        integer(1)
+      )
+      observed_lengths <- observed_lengths[observed_lengths > 0]
+
+      mean_lengths[[gene_name]] <- if (length(observed_lengths) > 0) {
+        round(mean(observed_lengths))
+      } else {
+        0L
+      }
+    }
+
+    mean_lengths <- mean_lengths[gene_names]
+  }
+
+  seq_lengths_path <- file.path(wd, paste0(seq_lengths_filename, ".tsv"))
+  stats_path <- file.path(wd, paste0(stats_filename, ".tsv"))
+
+  seq_length_lines <- c(
+    paste(c("Species", gene_names), collapse = "\t"),
+    paste(c("MeanLength", as.character(mean_lengths)), collapse = "\t")
+  )
+
+  stats_rows <- vector("list", length(sample_names))
+  names(stats_rows) <- sample_names
+
+  for (sample_name in sample_names) {
+    sample_stat <- sample_stats[[sample_name]]
+    sample_seq_lengths <- sample_stat$seq_lengths[gene_names]
+    thresholds <- .compute_recovery_thresholds(sample_seq_lengths, mean_lengths)
+
+    seq_length_lines <- c(
+      seq_length_lines,
+      paste(c(sample_name, as.character(sample_seq_lengths)), collapse = "\t")
+    )
+
+    stats_rows[[sample_name]] <- data.frame(
+      Name = sample_name,
+      NumReads = 0L,
+      ReadsMapped = 0L,
+      PctOnTarget = sprintf("%.1f", 0),
+      GenesMapped = sample_stat$genes_mapped,
+      GenesWithContigs = sample_stat$genes_with_contigs,
+      GenesWithSeqs = sample_stat$genes_with_seqs,
+      GenesAt25pct = unname(thresholds[["GenesAt25pct"]]),
+      GenesAt50pct = unname(thresholds[["GenesAt50pct"]]),
+      GenesAt75pct = unname(thresholds[["GenesAt75pct"]]),
+      GenesAt150pct = unname(thresholds[["GenesAt150pct"]]),
+      ParalogWarningsLong = sample_stat$paralog_warnings_long,
+      ParalogWarningsDepth = sample_stat$paralog_warnings_depth,
+      GenesWithoutStitchedContigs = sample_stat$genes_without_stitched_contigs,
+      GenesWithStitchedContigs = sample_stat$genes_with_stitched_contigs,
+      GenesWithStitchedContigsSkipped = sample_stat$genes_with_stitched_contigs_skipped,
+      GenesWithChimeraWarning = sample_stat$genes_with_chimera_warning,
+      TotalBasesRecovered = sample_stat$total_bases,
+      stringsAsFactors = FALSE
+    )
+  }
+
+  writeLines(seq_length_lines, con = seq_lengths_path)
+  utils::write.table(
+    do.call(rbind, stats_rows),
+    file = stats_path,
+    sep = "\t",
+    quote = FALSE,
+    row.names = FALSE
+  )
+
+  warning(
+    "Used native R supercontig stats fallback after 'hybpiper stats' failed. ",
+    "GenesAt*pct columns are approximate for supercontigs.",
+    call. = FALSE
+  )
+
+  list(
+    seq_lengths = seq_lengths_path,
+    stats = stats_path
+  )
+}
+
+
 #' Run HybPiper Stats via Conda
 #'
 #' Runs `hybpiper stats` across one or more assembled samples.
@@ -305,6 +747,12 @@ hybpiper_assemble <- function(
 #' @param conda_env Character; conda environment name containing HybPiper
 #' @param other_args Character vector; additional CLI args passed to
 #'   `hybpiper stats`
+#'
+#' @details
+#' When `mode = "supercontig"`, HybPhaser retries with a native R fallback if
+#' `hybpiper stats` fails. The fallback writes HybPiper-compatible
+#' `seq_lengths.tsv` and `hybpiper_stats.tsv` files directly from the assembled
+#' supercontig FASTA files.
 #'
 #' @return Named list with paths to output TSV files
 #' @export
@@ -367,6 +815,19 @@ hybpiper_stats <- function(
   )
 
   if (status != 0) {
+    if (identical(mode, "supercontig")) {
+      message("Falling back to native R supercontig stats")
+
+      return(.run_supercontig_stats_native(
+        targets_file = targets_file,
+        namelist = namelist,
+        wd = wd,
+        dna = dna,
+        seq_lengths_filename = seq_lengths_filename,
+        stats_filename = stats_filename
+      ))
+    }
+
     stop("HybPiper stats failed")
   }
 
