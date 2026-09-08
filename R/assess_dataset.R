@@ -701,7 +701,7 @@ assess_dataset <- function(
       )
     } else {
       png(
-        file = file.path(output_assess, "1_Data_recovered_overview.png"),
+        filename = file.path(output_assess, "1_Data_recovered_overview.png"),
         width = 1400,
         height = 1000
       )
@@ -894,7 +894,7 @@ assess_dataset <- function(
       )
     } else {
       png(
-        file = file.path(output_assess, "2a_Paralogs_for_all_samples.png"),
+        filename = file.path(output_assess, "2a_Paralogs_for_all_samples.png"),
         width = 1400,
         height = 1000
       )
@@ -948,7 +948,7 @@ assess_dataset <- function(
       )
     } else {
       png(
-        file = file.path(output_assess, "2b_Paralogs_for_each_sample.png"),
+        filename = file.path(output_assess, "2b_Paralogs_for_each_sample.png"),
         width = 1000,
         height = 1400
       )

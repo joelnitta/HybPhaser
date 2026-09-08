@@ -19,5 +19,10 @@ Useful links:
 \author{
 \strong{Maintainer}: Joel Nitta \email{joelnitta@gmail.com} (\href{https://orcid.org/0000-0003-4719-7472}{ORCID})
 
+Authors:
+\itemize{
+  \item Joel Nitta \email{joelnitta@gmail.com} (\href{https://orcid.org/0000-0003-4719-7472}{ORCID})
+}
+
 }
 \keyword{internal}

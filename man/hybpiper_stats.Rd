@@ -43,8 +43,8 @@ Named list with paths to output TSV files
 Runs \verb{hybpiper stats} across one or more assembled samples.
 }
 \details{
-When \verb{mode = "supercontig"}, HybPhaser retries with a native R fallback if
+When \code{mode = "supercontig"}, HybPhaser retries with a native R fallback if
 \verb{hybpiper stats} fails. The fallback writes HybPiper-compatible
-\verb{seq_lengths.tsv} and \verb{hybpiper_stats.tsv} files directly from the
-assembled supercontig FASTA files.
+\code{seq_lengths.tsv} and \code{hybpiper_stats.tsv} files directly from the assembled
+supercontig FASTA files.
 }

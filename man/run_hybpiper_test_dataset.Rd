@@ -27,6 +27,9 @@ run_hybpiper_test_dataset(
 \code{output_dir}; otherwise remove them after assembly}
 
 \item{mapper}{Character; one of "bwa" or "blast"}
+
+\item{other_args}{Character vector; additional CLI args passed to
+\verb{hybpiper assemble}}
 }
 \value{
 Named list with paths for downstream HybPhaser functions:

@@ -20,7 +20,7 @@ Removes an existing output directory before calling
 runs from triggering HybPiper overwrite errors in \code{{targets}} workflows.
 }
 \examples{
-\\dontrun{
+\dontrun{
 hp_data <- run_hybpiper_test_dataset_clean(
   output_dir = "targets_hybpiper_test",
   samples = c("EG30"),

@@ -7,7 +7,7 @@
 get_reference_samples(
   sequence_lists,
   reference_dir,
-  pattern = "_consensus\\\\\\\\.fasta$"
+  pattern = "_consensus\\\\.fasta$"
 )
 }
 \arguments{
@@ -26,7 +26,7 @@ Returns reference sample names from consensus FASTA filenames. Includes a
 \code{\link[=generate_sequence_lists]{generate_sequence_lists()}}.
 }
 \examples{
-\\dontrun{
+\dontrun{
 refs <- get_reference_samples(
   sequence_lists = seq_lists,
   reference_dir = "hybphaser_output/03_sequence_lists/samples_consensus"

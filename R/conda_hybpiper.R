@@ -850,6 +850,8 @@ hybpiper_stats <- function(
 #' @param keep_fastq Logical; if TRUE, keep extracted FASTQ files in
 #'   `output_dir`; otherwise remove them after assembly
 #' @param mapper Character; one of "bwa" or "blast"
+#' @param other_args Character vector; additional CLI args passed to
+#'   `hybpiper assemble`
 #'
 #' @return Named list with paths for downstream HybPhaser functions:
 #'   `hybpiper_dir`, `targets_file`, and `namelist`
