@@ -15,8 +15,10 @@ read_config(config_file, required_vars = NULL)
 Named list of configuration parameters
 }
 \description{
-Reads a configuration file for HybPhaser analysis and validates required
-parameters.
+Reads a HybPhaser \code{config.txt} file and validates required parameters.
+The file is a list of \code{key = value} lines, where \code{value} is a quoted
+string or a bare number (trailing \verb{# comments} are ignored). Values are
+taken literally, so Windows paths with backslashes are read correctly.
 }
 \examples{
 \dontrun{

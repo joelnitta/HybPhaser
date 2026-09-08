@@ -1,7 +1,9 @@
 #' Read and Validate HybPhaser Configuration
 #'
-#' Reads a configuration file for HybPhaser analysis and validates required
-#' parameters.
+#' Reads a HybPhaser `config.txt` file and validates required parameters.
+#' The file is a list of `key = value` lines, where `value` is a quoted
+#' string or a bare number (trailing `# comments` are ignored). Values are
+#' taken literally, so Windows paths with backslashes are read correctly.
 #'
 #' @param config_file Path to configuration file
 #' @param required_vars Character vector of required variable names
@@ -18,14 +20,30 @@ read_config <- function(config_file, required_vars = NULL) {
     stop("Configuration file not found: ", config_file)
   }
 
-  # Source the config file in a new environment
-  config_env <- new.env()
-  source(config_file, local = config_env)
+  lines <- readLines(config_file, warn = FALSE)
+  config <- list()
 
-  # Convert environment to list
-  config <- as.list(config_env)
+  for (raw in lines) {
+    line <- trimws(raw)
+    if (line == "" || startsWith(line, "#")) {
+      next
+    }
 
-  # Validate required variables
+    eq <- regexpr("=", line, fixed = TRUE)
+    if (eq < 1L) {
+      next
+    }
+
+    key <- trimws(substr(line, 1L, eq - 1L))
+    if (key == "") {
+      next
+    }
+
+    config[[key]] <- .parse_config_value(
+      trimws(substr(line, eq + 1L, nchar(line)))
+    )
+  }
+
   if (!is.null(required_vars)) {
     missing_vars <- setdiff(required_vars, names(config))
     if (length(missing_vars) > 0) {
@@ -37,6 +55,35 @@ read_config <- function(config_file, required_vars = NULL) {
   }
 
   config
+}
+
+
+# Parse the right-hand side of a `key = value` config line.
+.parse_config_value <- function(rhs) {
+  # Quoted string: return the content up to the closing quote, ignoring any
+  # trailing comment. Backslashes are kept literally.
+  if (startsWith(rhs, '"') || startsWith(rhs, "'")) {
+    q <- substr(rhs, 1L, 1L)
+    close <- regexpr(q, substr(rhs, 2L, nchar(rhs)), fixed = TRUE)
+    if (close < 1L) {
+      stop("Unterminated quoted value in config: ", rhs)
+    }
+    return(substr(rhs, 2L, close))
+  }
+
+  # Unquoted: strip a trailing comment, then coerce number / logical.
+  hash <- regexpr("#", rhs, fixed = TRUE)
+  if (hash > 0L) {
+    rhs <- trimws(substr(rhs, 1L, hash - 1L))
+  }
+  if (rhs %in% c("TRUE", "FALSE")) {
+    return(as.logical(rhs))
+  }
+  num <- suppressWarnings(as.numeric(rhs))
+  if (nzchar(rhs) && !is.na(num)) {
+    return(num)
+  }
+  rhs
 }
 
 

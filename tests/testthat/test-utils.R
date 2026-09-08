@@ -19,6 +19,30 @@ test_that("read_config reads valid configuration file", {
   # Clean up  unlink(config_file)
 })
 
+test_that("read_config reads backslash paths and trailing comments", {
+  config_file <- tempfile(fileext = ".txt")
+  win_path <- paste0("C:", "\\", "Users", "\\", "me", "\\", "data")
+  writeLines(
+    c(
+      "# a full-line comment",
+      paste0('path_to_output_folder = "', win_path, '"   # a trailing comment'),
+      'targets_file_format = "DNA"    # "DNA" or "AA"',
+      "no_of_threads = 4",
+      'read_type_cladeassociation = "auto"'
+    ),
+    config_file
+  )
+
+  config <- read_config(config_file)
+
+  expect_identical(config$path_to_output_folder, win_path)
+  expect_identical(config$targets_file_format, "DNA")
+  expect_identical(config$no_of_threads, 4)
+  expect_identical(config$read_type_cladeassociation, "auto")
+
+  unlink(config_file)
+})
+
 test_that("read_config fails when file doesn't exist", {
   expect_error(
     read_config("nonexistent_config.txt"),
