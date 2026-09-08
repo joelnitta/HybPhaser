@@ -13,6 +13,12 @@ if (has_docker) {
   )
 }
 #> Docker image 'joelnitta/rhybphaser:latest' not found. Set pull = TRUE to download it.
+
+# The end-to-end workflow below needs conda, HybPiper, Docker and network
+# access, so it does not run during package checks or when building the
+# site. Set RHYBPHASER_RUN_VIGNETTE=true to execute it (the vignettes.yaml
+# workflow does this).
+run_full_vignette <- identical(Sys.getenv("RHYBPHASER_RUN_VIGNETTE"), "true")
 ```
 
 ## Introduction
