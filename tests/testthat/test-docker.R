@@ -170,7 +170,6 @@ test_that("create_test_dataset creates complete test data", {
 
 test_that("create_real_test_dataset creates valid structure", {
   skip_on_cran()
-  skip_if_offline("raw.githubusercontent.com")
 
   test_base <- tempfile()
 
