@@ -310,25 +310,10 @@ later run it skips any target that is already up to date.
 
 ```{r run-pipeline, echo = FALSE, eval = run_targets_vignette, message = FALSE, warning = FALSE, results = "hide"}
 # Run the _targets.R shown above in a throwaway project directory and keep
-# the results the sections below need. The one figure is copied next to
-# this document so the pre-rendered vignette stays self-contained.
-lh_ad_png <- normalizePath(
-  "rhybphaser_targets-LH_vs_AD.png",
-  mustWork = FALSE
-)
-
+# the results the sections below need.
 res <- targets::tar_dir({
   writeLines(knitr::knit_code$get("targets-script"), "_targets.R")
   targets::tar_make(reporter = "silent")
-
-  file.copy(
-    file.path(
-      targets::tar_read(hybphaser_output_dir),
-      "02_assessment", "3_LH_vs_AD.png"
-    ),
-    lh_ad_png,
-    overwrite = TRUE
-  )
 
   merged <- targets::tar_read(merged_sequence_lists)
 
@@ -389,11 +374,21 @@ empty here because nothing crossed the threshold in this small example.
 res$dataset_assessment$loci_removed_paralogs_all
 ```
 
-The same information is written as figures under `02_assessment/`, e.g.
-locus heterozygosity vs allele divergence:
+`assess_dataset()` also writes this as a plot
+(`02_assessment/3_LH_vs_AD.png`); the same view of the summary table:
 
-```{r results-fig, eval = run_targets_vignette, echo = FALSE, out.width = "70%"}
-knitr::include_graphics("rhybphaser_targets-LH_vs_AD.png")
+```{r results-fig, eval = run_targets_vignette, echo = FALSE, fig.width = 6, fig.height = 5, out.width = "70%", fig.alt = "Locus heterozygosity versus allele divergence, one point per sample"}
+st <- res$dataset_assessment$summary_table
+plot(
+  st$allele_divergence, st$locus_heterozygosity,
+  xlab = "Allele divergence [%]", ylab = "Locus heterozygosity [%]",
+  main = "Locus heterozygosity vs allele divergence",
+  pch = 19, las = 1
+)
+text(
+  st$allele_divergence, st$locus_heterozygosity, st$sample,
+  pos = 4, cex = 0.9
+)
 ```
 
 ### Clade association

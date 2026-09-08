@@ -59,9 +59,7 @@ jobs:
       - name: Open PR if the pre-rendered vignette changed
         uses: peter-evans/create-pull-request@v6
         with:
-          add-paths: |
-            vignettes/rhybphaser_targets.Rmd
-            vignettes/rhybphaser_targets-*.png
+          add-paths: vignettes/
           branch: precompute-vignettes
           delete-branch: true
           commit-message: "Re-render targets vignette from .orig"

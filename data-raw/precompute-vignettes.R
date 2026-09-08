@@ -20,7 +20,13 @@ Sys.setenv(RHYBPHASER_RUN_TARGETS_VIGNETTE = "true")
 old_wd <- setwd("vignettes")
 on.exit(setwd(old_wd), add = TRUE)
 
-knitr::opts_chunk$set(comment = "#>", collapse = TRUE)
+# Figures land flat in vignettes/ with a distinctive prefix so they are
+# easy to commit and reference from the rendered .Rmd.
+knitr::opts_chunk$set(
+  comment = "#>",
+  collapse = TRUE,
+  fig.path = "rhybphaser_targets-fig-"
+)
 knitr::knit(
   input = "rhybphaser_targets.Rmd.orig",
   output = "rhybphaser_targets.Rmd"
