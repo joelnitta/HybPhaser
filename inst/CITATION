@@ -1,0 +1,43 @@
+if (!exists("meta") || is.null(meta)) {
+  meta <- packageDescription("rhybphaser")
+}
+version <- meta$Version
+
+citHeader(
+  "rhybphaser is an R implementation of the HybPhaser method. When using it in ",
+  "published work, please cite the HybPhaser paper (for the method) and, ",
+  "optionally, this package (for the implementation)."
+)
+
+bibentry(
+  bibtype = "Article",
+  key     = "nauheimer2021hybphaser",
+  title   = paste(
+    "HybPhaser: A workflow for the detection and phasing of hybrids in",
+    "target capture data sets"
+  ),
+  author  = c(
+    person("Lars", "Nauheimer"),
+    person("Nicholas", "Weigner"),
+    person("Elizabeth", "Joyce"),
+    person("Darren", "Crayn"),
+    person("Charles", "Clarke"),
+    person("Katharina", "Nargar")
+  ),
+  journal = "Applications in Plant Sciences",
+  year    = "2021",
+  volume  = "9",
+  number  = "7",
+  pages   = "e11441",
+  doi     = "10.1002/aps3.11441"
+)
+
+bibentry(
+  bibtype = "Manual",
+  key     = "rhybphaser",
+  title   = "rhybphaser: Phasing of Sequence Reads for Polyploid Hybrids from Target Capture Data",
+  author  = person("Joel", "Nitta"),
+  year    = format(Sys.Date(), "%Y"),
+  note    = paste0("R package version ", version),
+  url     = "https://github.com/joelnitta/rhybphaser"
+)
