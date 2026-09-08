@@ -277,31 +277,38 @@ test_that("count_snps works with Docker-generated consensus", {
   output_dir <- file.path(test_base, "hybphaser_output")
 
   # Run consensus generation
-  suppressMessages({
+  result <- suppressMessages(
     run_generate_consensus_sequences(
       hybpiper_dir = test_data$hybpiper_dir,
       output_dir = output_dir,
       sample = "sample1",
       threads = 1
     )
-  })
+  )
 
-  # If consensus sequences were generated, try to count SNPs
-  if (dir.exists(file.path(output_dir, "01_data", "sample1"))) {
-    # Count SNPs
-    snp_results <- count_snps(
-      path_to_output_folder = output_dir,
-      fasta_file_with_targets = test_data$targets_file,
-      targets_file_format = "DNA",
-      path_to_namelist = test_data$namelist,
-      intronerated_contig = FALSE
-    )
+  expect_equal(result, 0)
+  expect_true(dir.exists(output_dir))
 
-    expect_type(snp_results, "list")
-    expect_named(snp_results, c("tab_snps", "tab_length"))
-    expect_s3_class(snp_results$tab_snps, "data.frame")
-    expect_s3_class(snp_results$tab_length, "data.frame")
-  }
+  # The synthetic test dataset is not in a format the container script
+  # recognises, so it usually produces no 01_data/. When it does, verify
+  # count_snps() consumes the output.
+  skip_if_not(
+    dir.exists(file.path(output_dir, "01_data", "sample1")),
+    "Docker script produced no consensus output from synthetic test data"
+  )
+
+  snp_results <- count_snps(
+    path_to_output_folder = output_dir,
+    fasta_file_with_targets = test_data$targets_file,
+    targets_file_format = "DNA",
+    path_to_namelist = test_data$namelist,
+    intronerated_contig = FALSE
+  )
+
+  expect_type(snp_results, "list")
+  expect_named(snp_results, c("tab_snps", "tab_length"))
+  expect_s3_class(snp_results$tab_snps, "data.frame")
+  expect_s3_class(snp_results$tab_length, "data.frame")
 
   # Clean up
   unlink(test_base, recursive = TRUE)
