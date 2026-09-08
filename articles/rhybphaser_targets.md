@@ -296,19 +296,14 @@ a later run it skips any target that is already up to date.
 
 Any target can be read back with
 [`tar_read()`](https://docs.ropensci.org/targets/reference/tar_read.html).
-This section is only shown when the pipeline has actually run; the
-numbers below are from the three samples of the HybPiper test dataset.
+When the pipeline has run, each subsection below also shows its output
+for the three samples of the HybPiper test dataset.
 
 ### Heterozygosity per locus
 
 `tar_read(snp_results)$tab_snps` is a locus × sample matrix of the
 proportion of polymorphic (ambiguity-coded) sites in each consensus
 sequence. Higher values mean more within-sample allelic variation.
-
-``` r
-
-round(res$snp_results$tab_snps, 4)
-```
 
 ### Dataset summary
 
@@ -319,22 +314,10 @@ weighted by sequence length. Samples elevated on **both** axes are the
 candidates to carry forward to phasing; the useful cut-offs depend on
 the dataset.
 
-``` r
-
-res$dataset_assessment$summary_table[, c(
-  "sample", "nloci", "bpoftarget", "allele_divergence", "locus_heterozygosity"
-)]
-```
-
 [`assess_dataset()`](https://joelnitta.github.io/rhybphaser/reference/assess_dataset.md)
 also drops loci whose mean SNP proportion across samples is an outlier
 (putative paralogs). `loci_removed_paralogs_all` lists them — empty here
 because nothing crossed the threshold in this small example.
-
-``` r
-
-res$dataset_assessment$loci_removed_paralogs_all
-```
 
 The same information is written as figures under `02_assessment/`, e.g.
 locus heterozygosity vs allele divergence:
@@ -348,22 +331,12 @@ here). A sample with strong support for two or more divergent references
 is a candidate hybrid; the samples below each map mostly to their own
 reference.
 
-``` r
-
-round(num_cols(res$clade_table$table_clade_association), 1)
-```
-
 ### Phasing
 
 `tar_read(phasing_stats)$table_phasing_stats` reports, for each phased
 accession, the proportion of reads assigned to each parental reference
 (here `P1` and `P2`). The ratio is informative about ploidy: a diploid
 F1 hybrid is near 1:1, whereas an allotetraploid can be closer to 3:1.
-
-``` r
-
-round(num_cols(res$phasing_stats$table_phasing_stats), 3)
-```
 
 [`run_phasing()`](https://joelnitta.github.io/rhybphaser/reference/run_phasing.md)
 also wrote one read file per haplotype (`<sample>_to_<ref>.fastq`),
@@ -375,12 +348,6 @@ which the pipeline reassembled with HybPiper and fed back through part
 `tar_read(merged_sequence_lists)` describes the combined per-locus FASTA
 files, with the phased haplotypes substituted for their unphased sample,
 ready for alignment and phylogenetics.
-
-``` r
-
-res$merged_samples
-res$n_merged_loci
-```
 
 ## Notes
 
